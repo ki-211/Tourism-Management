@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "活动列表",
+  "usingComponents": {
+    "u-button": "../../node-modules/uview-plus/components/u-button/u-button",
+    "u-list-item": "../../node-modules/uview-plus/components/u-list-item/u-list-item",
+    "u-list": "../../node-modules/uview-plus/components/u-list/u-list"
+  }
+}

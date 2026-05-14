@@ -1,0 +1,27 @@
+
+.sign-detail-page.data-v-41d7d617 {
+  padding: 30rpx;
+}
+.record-card.data-v-41d7d617 {
+  background: #fff;
+  padding: 20rpx;
+  margin-bottom: 16rpx;
+  border-radius: 10rpx;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.05);
+}
+.record-title.data-v-41d7d617 {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #333;
+}
+.record-time.data-v-41d7d617 {
+  margin-top: 6rpx;
+  color: #666;
+  font-size: 26rpx;
+}
+.empty-tip.data-v-41d7d617 {
+  text-align: center;
+  padding: 80rpx 0;
+  color: #999;
+  font-size: 30rpx;
+}

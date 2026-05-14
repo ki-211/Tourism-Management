@@ -1,0 +1,30 @@
+
+.container.data-v-1536b735 {
+  padding: 20px;
+  background-color: #fff;
+}
+.title.data-v-1536b735 {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+.section.data-v-1536b735 {
+  margin-top: 10px;
+  font-size: 16px;
+}
+.desc.data-v-1536b735 {
+  margin-top: 5px;
+  line-height: 1.6;
+  color: #666;
+}
+.upload-row.data-v-1536b735 {
+  margin: 12px 0;
+}
+.btn-group.data-v-1536b735 {
+  margin-top: 30px;
+  display: flex;
+  gap: 12px;
+}
+.action-btn.data-v-1536b735 {
+  flex: 1;
+}

@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "活动详情",
+  "usingComponents": {
+    "u-album": "../../node-modules/uview-plus/components/u-album/u-album",
+    "u-upload": "../../node-modules/uview-plus/components/u-upload/u-upload",
+    "u-button": "../../node-modules/uview-plus/components/u-button/u-button"
+  }
+}

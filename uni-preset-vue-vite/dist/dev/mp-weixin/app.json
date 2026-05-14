@@ -1,0 +1,62 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/register/register",
+    "pages/home/home",
+    "pages/activityCreate/activityCreate",
+    "pages/activityDetail/activityDetail",
+    "pages/activityList/activityList",
+    "pages/signupList/signupList",
+    "pages/vehicleAdd/vehicleAdd",
+    "pages/vehicleList/vehicleList",
+    "pages/myActivity/myActivity",
+    "pages/myPublished/myPublished",
+    "pages/personal/personal",
+    "pages/editInfo/editInfo",
+    "pages/signList/signList",
+    "pages/signTask/signTask",
+    "pages/signDetail/signDetail",
+    "pages/ongoingSignup/ongoingSignup",
+    "pages/activityRoom/activityRoom",
+    "pages/signTaskDetail/signTaskDetail"
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "uni-app",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#F8F8F8"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#007AFF",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/home/home",
+        "iconPath": "static/icons/list.png",
+        "selectedIconPath": "static/icons/list-active.png",
+        "text": "活动"
+      },
+      {
+        "pagePath": "pages/signList/signList",
+        "iconPath": "static/icons/sign.png",
+        "selectedIconPath": "static/icons/sign-active.png",
+        "text": "签到"
+      },
+      {
+        "pagePath": "pages/myActivity/myActivity",
+        "iconPath": "static/icons/myActivity.png",
+        "selectedIconPath": "static/icons/myActivity-active.png",
+        "text": "参加过的活动"
+      },
+      {
+        "pagePath": "pages/personal/personal",
+        "iconPath": "static/icons/user.png",
+        "selectedIconPath": "static/icons/user-active.png",
+        "text": "我的"
+      }
+    ]
+  },
+  "usingComponents": {}
+}

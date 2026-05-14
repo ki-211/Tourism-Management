@@ -1,0 +1,44 @@
+# IntelliJ IDEA
+.idea
+
+
+# Maven
+target/
+
+
+# Logs
+*.log
+
+# Config
+application.yaml
+application.yml
+# Scripts
+push.sh
+build_restart.sh
+build_local.sh
+
+# 排除 IDEA 配置
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# 排除编译产物
+target/
+out/
+
+# 排除系统/IDE 临时文件
+.DS_Store
+*.log
+.idea/workspace.xml
+.idea/dataSource
+package-lock.json
+
+
+# 排除前端编译库
+web/dist
+web/node_modules
+web/.DS_Store
+web/unpackage
+
+.vscode/

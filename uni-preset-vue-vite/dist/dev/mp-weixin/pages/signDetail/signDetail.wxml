@@ -1,0 +1,1 @@
+<view class="sign-detail-page data-v-41d7d617"><view wx:if="{{a}}" class="empty-tip data-v-41d7d617">暂无签到记录</view><view wx:for="{{b}}" wx:for-item="item" wx:key="c" class="record-card data-v-41d7d617"><view class="record-title data-v-41d7d617">{{item.a}}</view><view class="record-time data-v-41d7d617">签到时间：{{item.b}}</view></view></view>

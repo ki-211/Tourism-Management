@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zkt.backend.mapper.SignupMapper">
+
+    <select id="findActivitiesByUserId" resultType="com.zkt.backend.entity.Activity">
+        SELECT a.*
+        FROM signup s
+        JOIN activity a ON s.activity_id = a.id
+        WHERE s.user_id = #{userId}
+        AND s.status = 1  <!-- 可选过滤条件：仅查状态为已报名 -->
+    </select>
+
+</mapper>

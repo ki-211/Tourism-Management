@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "签到列表",
+  "usingComponents": {
+    "u-button": "../../node-modules/uview-plus/components/u-button/u-button"
+  }
+}

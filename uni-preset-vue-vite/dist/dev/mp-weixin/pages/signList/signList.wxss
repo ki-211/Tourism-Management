@@ -1,0 +1,56 @@
+
+.sign-list-page.data-v-8344c52d {
+  padding: 30rpx;
+}
+.top-bar.data-v-8344c52d {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20rpx;
+}
+.history-btn.data-v-8344c52d {
+  font-size: 24rpx;
+  padding: 0 20rpx;
+  height: 50rpx;
+  line-height: 50rpx;
+  border-radius: 12rpx;
+}
+.task-card.data-v-8344c52d {
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.left.data-v-8344c52d {
+  flex: 1;
+  margin-right: 20rpx;
+}
+.task-title.data-v-8344c52d {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #222;
+}
+.task-time.data-v-8344c52d {
+  font-size: 26rpx;
+  color: #888;
+  margin-top: 6rpx;
+}
+.sign-btn.data-v-8344c52d {
+  font-size: 24rpx;
+  height: 56rpx;
+  line-height: 56rpx;
+  padding: 0 8rpx;
+  border-radius: 28rpx;
+  min-width: 60rpx;
+  max-width: 80rpx;
+  text-align: center;
+}
+.empty-tip.data-v-8344c52d {
+  text-align: center;
+  padding: 80rpx 0;
+  color: #999;
+  font-size: 30rpx;
+}

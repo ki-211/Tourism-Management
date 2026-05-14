@@ -1,0 +1,32 @@
+
+.personal-page.data-v-73f30864 {
+  padding: 20px;
+  position: relative;
+  min-height: 100vh;
+  background-color: #f9f9f9;
+}
+.logout.data-v-73f30864 {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+}
+.user-card.data-v-73f30864 {
+  background: #ffffff;
+  padding: 16px;
+  border-radius: 10px;
+  margin-top: 60px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+.user-name.data-v-73f30864 {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+.user-account.data-v-73f30864 {
+  font-size: 14px;
+  color: #666;
+}
+.edit-btn.data-v-73f30864 {
+  margin-top: 10px;
+}

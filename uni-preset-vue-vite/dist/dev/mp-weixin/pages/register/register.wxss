@@ -1,0 +1,14 @@
+
+.container.data-v-97bb96ad { 
+  padding: 40rpx;
+  background-color: #ffffff;
+  min-height: 100vh;
+}
+.footer.data-v-97bb96ad {
+  margin-top: 40rpx;
+  text-align: center;
+}
+.footer text.data-v-97bb96ad {
+  color: #007AFF;
+  font-size: 28rpx;
+}

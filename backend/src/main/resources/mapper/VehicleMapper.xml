@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zkt.backend.mapper.VehicleMapper">
+    <insert id="insert" parameterType="com.zkt.backend.entity.Vehicle" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO vehicle
+        (activity_id, plate_number, driver_name, pickup_time, pickup_location, creator_id)
+        VALUES
+            (#{activityId}, #{plateNumber}, #{driverName}, #{pickupTime}, #{pickupLocation}, #{creatorId})
+    </insert>
+
+    <select id="selectByActivityId" parameterType="long" resultType="com.zkt.backend.entity.Vehicle">
+        SELECT * FROM vehicle WHERE activity_id = #{activityId} ORDER BY create_time DESC
+    </select>
+</mapper>

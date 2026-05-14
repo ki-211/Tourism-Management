@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zkt.backend.mapper.SignRecordMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sign_record (task_id, user_id, sign_time)
+        VALUES (#{taskId}, #{userId}, #{signTime})
+    </insert>
+
+    <select id="selectByTaskIdAndUserId" resultType="com.zkt.backend.entity.SignRecord">
+        SELECT * FROM sign_record
+        WHERE task_id = #{taskId} AND user_id = #{userId}
+    </select>
+
+    <select id="selectByUser" resultType="map">
+        SELECT sr.id, sr.sign_time AS signTime, st.title
+        FROM sign_record sr
+                 LEFT JOIN sign_task st ON sr.task_id = st.id
+        WHERE sr.user_id = #{userId}
+        ORDER BY sr.sign_time DESC
+    </select>
+
+    <select id="selectByActivity" resultType="map">
+        SELECT su.user_id AS userId,
+               u.nickname AS nickname,
+               COUNT(DISTINCT st.id) AS totalTasks,
+               COUNT(sr.id) AS signedCount
+        FROM signup su
+                 LEFT JOIN sign_task st ON st.activity_id = su.activity_id
+                 LEFT JOIN sign_record sr ON sr.task_id = st.id AND sr.user_id = su.user_id
+                 LEFT JOIN `user` u ON u.id = su.user_id
+        WHERE su.activity_id = #{activityId}
+        GROUP BY su.user_id, u.nickname
+    </select>
+
+    <select id="selectStatusByActivity" resultType="map">
+        SELECT sr.user_id AS userId, sr.task_id AS taskId
+        FROM sign_record sr
+                 JOIN sign_task st ON st.id = sr.task_id
+        WHERE st.activity_id = #{activityId}
+    </select>
+
+    <select id="selectByTaskId" resultType="com.zkt.backend.entity.SignRecord">
+        SELECT * FROM sign_record
+        WHERE task_id = #{taskId}
+        ORDER BY sign_time DESC
+    </select>
+
+    <select id="selectTaskDetail" resultType="map">
+        SELECT
+            st.id AS taskId,
+            st.title AS taskTitle,
+            st.description AS taskDescription,
+            st.create_time AS createTime,
+            a.id AS activityId,
+            a.title AS activityTitle,
+            (SELECT JSON_ARRAYAGG(
+                JSON_OBJECT(
+                    'userId', u.id,
+                    'nickname', u.nickname,
+                    'signTime', sr.sign_time
+                )
+            )
+            FROM sign_record sr
+            JOIN `user` u ON u.id = sr.user_id
+            WHERE sr.task_id = #{taskId}
+            ) AS signedUsers,
+            (SELECT JSON_ARRAYAGG(
+                JSON_OBJECT(
+                    'userId', u.id,
+                    'nickname', u.nickname
+                )
+            )
+            FROM signup su
+            JOIN `user` u ON u.id = su.user_id
+            WHERE su.activity_id = st.activity_id
+            AND su.user_id NOT IN (
+                SELECT user_id FROM sign_record WHERE task_id = #{taskId}
+            )
+            ) AS unsignedUsers
+        FROM sign_task st
+        JOIN activity a ON a.id = st.activity_id
+        WHERE st.id = #{taskId}
+    </select>
+</mapper>
