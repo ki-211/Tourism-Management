@@ -10,5 +10,6 @@ public interface ActivityService {
     List<Activity> getAll();
     List<Activity> getByUser(Long userId);
     List<Activity> getActivitiesByCreatorId(Long userId);
+    void transferCreator(Long activityId, Long currentUserId, Long newCreatorId);
 }
 

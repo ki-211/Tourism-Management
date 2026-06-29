@@ -13,5 +13,6 @@ public interface ActivityMapper {
     List<Activity> selectAll();
     List<Activity> selectByCreator(Long userId);
     List<Activity> selectByCreatorId(@Param("creatorId") Long creatorId);
+    int updateCreatorId(@Param("activityId") Long activityId, @Param("newCreatorId") Long newCreatorId);
 }
 

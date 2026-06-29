@@ -6,6 +6,7 @@ import com.zkt.backend.service.ChatMessageService;
 import com.zkt.backend.service.SignupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -14,12 +15,12 @@ public class ChatMessageController {
 
     @Autowired
     private ChatMessageService chatMessageService;
-    
+
     @Autowired
     private SignupService signupService;
 
     @GetMapping("/list")
-    public Result<List<ChatMessage>> list(@RequestParam(required = false) Long activityId, 
+    public Result<List<ChatMessage>> list(@RequestParam(required = false) Long activityId,
                                           @RequestParam(required = false) Long userId) {
         try {
             if (activityId == null) {
@@ -28,12 +29,12 @@ public class ChatMessageController {
             if (userId == null) {
                 return Result.error("用户ID不能为空");
             }
-            
+
             // 验证用户是否已报名该活动
             if (!signupService.hasUserSignedUp(activityId, userId)) {
                 return Result.error("您还未报名该活动，无法访问活动室");
             }
-            
+
             return Result.success(chatMessageService.list(activityId));
         } catch (Exception e) {
             e.printStackTrace();
@@ -53,12 +54,12 @@ public class ChatMessageController {
             if (message.getContent() == null || message.getContent().trim().isEmpty()) {
                 return Result.error("消息内容不能为空");
             }
-            
+
             // 验证用户是否已报名该活动
             if (!signupService.hasUserSignedUp(message.getActivityId(), message.getUserId())) {
                 return Result.error("您还未报名该活动，无法发送消息");
             }
-            
+
             chatMessageService.send(message);
             return Result.success("发送成功");
         } catch (Exception e) {

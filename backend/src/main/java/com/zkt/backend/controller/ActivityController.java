@@ -2,12 +2,14 @@ package com.zkt.backend.controller;
 
 import com.zkt.backend.common.Result;
 import com.zkt.backend.entity.Activity;
+import com.zkt.backend.entity.Signup;
 import com.zkt.backend.service.ActivityService;
 import com.zkt.backend.service.SignupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/activity")
@@ -26,6 +28,16 @@ public class ActivityController {
             // Long userId = JwtUtil.getUserIdFromToken(authHeader);
             // activity.setCreatorId(userId);
             activityService.create(activity);
+
+            // 团长（创建者）默认参加活动
+            if (activity.getCreatorId() != null && activity.getId() != null) {
+                Signup signup = new Signup();
+                signup.setActivityId(activity.getId());
+                signup.setUserId(activity.getCreatorId());
+                signup.setRemark("团长");
+                signupService.signup(signup);
+            }
+
             return Result.success("发布成功");
         } catch (Exception e) {
             return Result.error("发布失败：" + e.getMessage());
@@ -78,6 +90,27 @@ public class ActivityController {
             return Result.success(activity);
         } catch (Exception e) {
             return Result.error("获取活动详情失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 团长转让
+     */
+    @PostMapping("/transfer")
+    public Result<?> transferCreator(@RequestBody Map<String, Long> body) {
+        Long activityId = body.get("activityId");
+        Long currentUserId = body.get("currentUserId");
+        Long newCreatorId = body.get("newCreatorId");
+        if (activityId == null || currentUserId == null || newCreatorId == null) {
+            return Result.error("参数不完整");
+        }
+        try {
+            activityService.transferCreator(activityId, currentUserId, newCreatorId);
+            return Result.success("转让成功");
+        } catch (IllegalArgumentException e) {
+            return Result.error(e.getMessage());
+        } catch (Exception e) {
+            return Result.error("转让失败：" + e.getMessage());
         }
     }
 }

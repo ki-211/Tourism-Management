@@ -1,6 +1,7 @@
 package com.zkt.backend.service;
 
 import com.zkt.backend.entity.AlbumPhoto;
+
 import java.util.List;
 
 public interface AlbumPhotoService {

@@ -1,9 +1,9 @@
 package com.zkt.backend.service.impl;
 
 import com.zkt.backend.entity.AlbumPhoto;
+import com.zkt.backend.entity.Signup;
 import com.zkt.backend.mapper.AlbumPhotoMapper;
 import com.zkt.backend.mapper.SignupMapper;
-import com.zkt.backend.entity.Signup;
 import com.zkt.backend.service.AlbumPhotoService;
 import org.springframework.stereotype.Service;
 
