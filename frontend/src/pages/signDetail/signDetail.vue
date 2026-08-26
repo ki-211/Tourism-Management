@@ -1,0 +1,2 @@
+<template><view class="page"><view v-for="r in records" :key="r.recordId" class="card"><view class="section-title">{{ r.taskTitle }}</view><view>{{ r.activityTitle }}</view><view class="muted">{{ displayTime(r.signedAt) }}</view></view><view v-if="!records.length" class="empty">暂无签到记录</view></view></template>
+<script setup lang="ts">import{ref}from'vue';import{onShow}from'@dcloudio/uni-app';import{api}from'@/services/api';import{displayTime}from'@/utils/time';const records=ref<any[]>([]);onShow(async()=>records.value=await api('/users/me/sign-records'))</script>

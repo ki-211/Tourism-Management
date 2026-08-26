@@ -1,0 +1,39 @@
+{
+  "name": "校园出游管理",
+  "appid": "",
+  "description": "面向校园社团与同学的活动协作工具",
+  "versionName": "2.0.0",
+  "versionCode": "200",
+  "transformPx": false,
+  "vueVersion": "3",
+  "app-plus": {
+    "usingComponents": true,
+    "nvueStyleCompiler": "uni-app",
+    "compilerVersion": 3,
+    "modules": { "Geolocation": {}, "Camera": {} },
+    "distribute": {
+      "android": {
+        "permissions": [
+          "<uses-permission android:name=\"android.permission.INTERNET\"/>",
+          "<uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\"/>",
+          "<uses-permission android:name=\"android.permission.ACCESS_FINE_LOCATION\"/>",
+          "<uses-permission android:name=\"android.permission.ACCESS_COARSE_LOCATION\"/>",
+          "<uses-permission android:name=\"android.permission.CAMERA\"/>"
+        ]
+      },
+      "ios": {},
+      "sdkConfigs": {}
+    }
+  },
+  "mp-weixin": {
+    "appid": "",
+    "setting": { "urlCheck": true },
+    "usingComponents": true,
+    "permission": {
+      "scope.userLocation": { "desc": "用于活动签到和由你主动开启的成员位置共享" }
+    },
+    "requiredPrivateInfos": ["getLocation"]
+  },
+  "h5": { "router": { "mode": "history", "base": "/" } },
+  "uniStatistics": { "enable": false }
+}

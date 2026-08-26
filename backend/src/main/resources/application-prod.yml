@@ -1,24 +1,13 @@
-# 生产环境配置
-# 注意：生产环境敏感信息请使用环境变量
-
 spring:
   datasource:
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT:3306}/${DB_NAME}?useUnicode=true&characterEncoding=utf8&useSSL=true&serverTimezone=Asia/Shanghai
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
-    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?useUnicode=true&characterEncoding=utf8&useSSL=true&serverTimezone=Asia/Shanghai
-
-# 生产环境JWT配置
-jwt:
-  secret: ${JWT_SECRET}
-  expiration: ${JWT_EXPIRATION:86400000}
-
-mybatis:
-  configuration:
-    # 生产环境关闭SQL打印
-    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
-
-logging:
-  level:
-    com.zkt.backend: info
-    com.zkt.backend.mapper: warn
-
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+  h2.console.enabled: false
+springdoc:
+  api-docs.enabled: false
+  swagger-ui.enabled: false
+app:
+  storage.type: s3
