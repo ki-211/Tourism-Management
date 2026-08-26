@@ -2,7 +2,7 @@
   <view>
     <view v-if="!sharing" class="card welcome">
       <view class="section-title">主动开启位置共享</view>
-      <view class="muted">仅活动成员可查看；关闭或离开活动室后立即停止。</view>
+      <view class="muted">仅活动参与者可查看；关闭或离开活动空间后立即停止。</view>
       <button class="primary-btn" @click="start">开启位置共享</button>
       <button class="secondary-btn" @click="manual = true">地址搜索 / 手动选点</button>
     </view>

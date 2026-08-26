@@ -42,7 +42,7 @@ public class ActivityController {
     }
     @PostMapping("/{id}/transfer") ApiResponse<ActivityService.ActivityView> transfer(@AuthenticationPrincipal UserPrincipal p,
             @PathVariable Long id, @Valid @RequestBody TransferRequest r) {
-        return ApiResponse.ok("团长已转让", service.transfer(p.id(), id, r.newCreatorId()));
+        return ApiResponse.ok("活动负责人已转让", service.transfer(p.id(), id, r.newCreatorId()));
     }
     @PostMapping("/{id}/invitation-code/rotate") ApiResponse<ActivityService.ActivityView> rotate(@AuthenticationPrincipal UserPrincipal p, @PathVariable Long id) {
         return ApiResponse.ok("邀请码已更新", service.rotateInvitation(p.id(), id));

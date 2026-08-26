@@ -43,7 +43,7 @@ $memberId = $memberLogin.data.user.id
 $now = Get-Date
 
 $created = Invoke-Api POST '/activities' $ownerToken @{
-    title = 'HTTP full-flow smoke activity'; description = 'Automated smoke test'; location = 'Test campus'
+    title = 'HTTP full-flow smoke activity'; description = 'Automated smoke test'; location = 'Test venue'
     signupStart = $now.AddMinutes(-1).ToString('s'); signupEnd = $now.AddDays(1).ToString('s')
     startTime = $now.AddDays(2).ToString('s'); endTime = $now.AddDays(3).ToString('s')
     visibility = 'INVITE_ONLY'; feeRule = 'AA'
@@ -109,7 +109,7 @@ if ($history.data.Count -lt 2) { throw 'Attendance history failed' }
 
 $vehicle = Invoke-Api POST ('/activities/' + $activityId + '/vehicles') $ownerToken @{
     plateNumber = 'TEST-SMOKE'; driverName = 'Smoke driver'
-    pickupTime = $now.AddDays(2).AddHours(-1).ToString('s'); pickupLocation = 'Campus gate'
+    pickupTime = $now.AddDays(2).AddHours(-1).ToString('s'); pickupLocation = 'Main entrance'
 }
 if (-not $vehicle.data.id) { throw 'Vehicle creation failed' }
 $vehicles = Invoke-Api GET ('/activities/' + $activityId + '/vehicles') $memberToken

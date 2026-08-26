@@ -4,11 +4,11 @@
 
 后端按 `auth`、`activity`、`attendance`、`room`、`location`、`media`、`vehicle`、`common` 划分。Controller 只处理协议和校验，Service 负责事务与权限，Repository 负责持久化。操作者始终来自 JWT，不接受客户端传入的 `userId` 或 `creatorId`。
 
-前端以 `services/api.ts` 统一请求和一次性刷新，以 `services/realtime.ts` 管理 WebSocket。活动室拆为聊天、签到、相册和位置四个组件，父页面销毁时关闭连接，各组件清理自己的定时器和位置共享。
+前端以 `services/api.ts` 统一请求和一次性刷新，以 `services/realtime.ts` 管理 WebSocket。活动空间拆为聊天、签到、相册和位置四个组件，父页面销毁时关闭连接，各组件清理自己的定时器和位置共享。
 
 ## 数据与一致性
 
-Flyway `V1__baseline.sql` 创建用户、刷新令牌、活动、报名、车辆、聊天、签到任务/记录、媒体、相册和共享位置表。创建活动与创建者报名、团长转让、签到写入均在事务中执行；唯一约束阻止重复报名和重复签到。
+Flyway `V1__baseline.sql` 创建用户、刷新令牌、活动、报名、车辆、聊天、签到任务/记录、媒体、相册和共享位置表。创建活动与负责人自动报名、负责人转让、签到写入均在事务中执行；唯一约束阻止重复报名和重复签到。
 
 HTTP 是最终事实来源。WebSocket 仅推送 `CHAT_CREATED`、`SIGN_TASK_CREATED`、`SIGN_RECORD_CREATED`、`PHOTO_ADDED`、`LOCATION_UPDATED`、`LOCATION_REMOVED`、`CREATOR_TRANSFERRED` 等变更通知，客户端收到通知后补拉 HTTP 数据。
 

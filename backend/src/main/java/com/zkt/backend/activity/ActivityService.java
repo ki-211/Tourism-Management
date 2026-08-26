@@ -40,7 +40,7 @@ public class ActivityService {
         a.setFeeRule(c.feeRule()); a.setVisibility(c.visibility()); a.setCreatorId(userId);
         if (c.visibility() == ActivityVisibility.INVITE_ONLY) a.setInvitationCode(uniqueCode());
         activities.save(a);
-        Signup creator = new Signup(); creator.setActivityId(a.getId()); creator.setUserId(userId); creator.setRemark("团长");
+        Signup creator = new Signup(); creator.setActivityId(a.getId()); creator.setUserId(userId); creator.setRemark("活动负责人");
         signups.save(creator);
         return view(a, userId);
     }
@@ -64,9 +64,9 @@ public class ActivityService {
     @Transactional
     public ActivityView transfer(Long actorId, Long activityId, Long newCreatorId) {
         Activity a = creatorActivity(actorId, activityId);
-        if (actorId.equals(newCreatorId)) throw DomainException.badRequest("SAME_CREATOR", "新团长不能是自己");
+        if (actorId.equals(newCreatorId)) throw DomainException.badRequest("SAME_CREATOR", "新负责人不能是自己");
         if (!signups.existsByActivityIdAndUserId(activityId, newCreatorId))
-            throw DomainException.badRequest("NOT_MEMBER", "新团长必须已报名活动");
+            throw DomainException.badRequest("NOT_MEMBER", "新负责人必须是活动参与者");
         a.setCreatorId(newCreatorId);
         events.publish(activityId, "CREATOR_TRANSFERRED", new CreatorTransfer(actorId, newCreatorId));
         return view(a, actorId);
@@ -128,7 +128,7 @@ public class ActivityService {
     public void requireMember(Long activityId, Long userId) { if (!isMember(activityId, userId)) throw DomainException.forbidden("请先报名该活动"); }
     public Activity find(Long id) { return activities.findById(id).orElseThrow(() -> DomainException.notFound("活动不存在")); }
     public Activity creatorActivity(Long userId, Long id) {
-        Activity a = find(id); if (!a.getCreatorId().equals(userId)) throw DomainException.forbidden("只有团长可以执行该操作"); return a;
+        Activity a = find(id); if (!a.getCreatorId().equals(userId)) throw DomainException.forbidden("只有活动负责人可以执行该操作"); return a;
     }
 
     private ActivityView view(Activity a, Long viewerId) {

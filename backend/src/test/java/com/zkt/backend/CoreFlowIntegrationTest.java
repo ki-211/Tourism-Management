@@ -44,7 +44,7 @@ class CoreFlowIntegrationTest {
 
         LocalDateTime now = LocalDateTime.now().withNano(0);
         Map<String, Object> command = Map.of(
-                "title", "邀请制郊游", "description", "核心流程测试", "location", "测试校园",
+                "title", "邀请制活动", "description", "核心流程测试", "location", "测试场地",
                 "signupStart", now.minusMinutes(1).toString(), "signupEnd", now.plusDays(1).toString(),
                 "startTime", now.plusDays(2).toString(), "endTime", now.plusDays(3).toString(),
                 "visibility", "INVITE_ONLY", "feeRule", "AA"
