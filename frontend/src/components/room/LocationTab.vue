@@ -71,5 +71,5 @@ onUnmounted(() => { if (timer.value) clearInterval(timer.value); if (sharing.val
 
 <style scoped lang="scss">
 .welcome{text-align:center;padding:60rpx 30rpx}.map{width:100%;height:52vh;border-radius:$radius}.gap{margin-top:14rpx}
-.search-row{display:flex;align-items:center;gap:12rpx}.search-input{flex:1}.place{padding:18rpx 4rpx;border-bottom:1px solid $border}
+.search-row{display:flex;align-items:center;width:100%;gap:12rpx}.search-input{flex:1;min-width:0}.search-row button{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:116rpx;height:84rpx;margin:0;padding:0;color:#fff;line-height:1;white-space:nowrap;background:$primary;border-radius:16rpx}.place{padding:18rpx 4rpx;border-bottom:1px solid $border}
 </style>

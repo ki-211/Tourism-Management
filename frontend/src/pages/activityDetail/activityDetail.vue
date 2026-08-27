@@ -1,25 +1,56 @@
 <template>
-<view v-if="activity" class="page"><image v-if="activity.coverUrl" class="hero" :src="activity.coverUrl" mode="aspectFill" /><view class="card"><view class="row-between"><view class="page-title">{{ activity.title }}</view><text class="tag">{{ activity.visibility==='PUBLIC'?'公开':'邀请制' }}</text></view><view>地点：{{ activity.location }}</view><view>时间：{{ displayTime(activity.startTime) }} - {{ displayTime(activity.endTime) }}</view><view>负责人：{{ activity.creatorName }}</view><view v-if="activity.joined">我的角色：<text class="tag">{{ activity.creator?'活动负责人':'参与者' }}</text></view><view v-if="activity.feeRule">费用说明：{{ activity.feeRule }}</view><view class="description">{{ activity.description||'暂无说明' }}</view><view v-if="activity.creator&&activity.invitationCode" class="invite">邀请码：<text selectable>{{ activity.invitationCode }}</text><button size="mini" @click="rotate">换一个</button></view></view><view v-if="!activity.joined" class="card"><view class="section-title">报名信息</view><input v-model="join.grade" class="input" placeholder="身份或部门（可选）" /><input v-model.number="join.passengerCount" class="input gap" type="number" placeholder="同行人数（可选）" /><textarea v-model="join.remark" class="textarea gap" placeholder="备注（可选）" /><button class="primary-btn" @click="signup">提交报名</button></view><view v-else class="card actions"><button class="primary-btn" @click="room">进入活动空间</button><button class="secondary-btn" @click="vehicles">车辆信息</button><button v-if="activity.creator" class="secondary-btn" @click="members">参与者名单</button><button v-if="activity.creator" class="secondary-btn" @click="retryCover">{{ activity.coverUrl?'更新封面':'补传封面' }}</button></view></view>
+  <view v-if="activity" class="page detail-page">
+    <view class="hero-wrap">
+      <image v-if="activity.coverUrl" class="hero" :src="activity.coverUrl" mode="aspectFill" />
+      <view v-else class="hero hero-empty"><text class="hero-mark">行</text><text>一起去更远的地方</text></view>
+      <text class="hero-tag">{{ activity.visibility === 'PUBLIC' ? '公开活动' : '邀请制活动' }}</text>
+    </view>
+    <view class="card overview">
+      <view class="row-between heading"><view class="page-title">{{ activity.title }}</view><text v-if="activity.joined" class="tag">{{ activity.creator ? '我负责' : '已参与' }}</text></view>
+      <view class="info-line"><text class="info-icon">⌖</text><text class="info-value">{{ activity.location }}</text></view>
+      <view class="info-line"><text class="info-icon">◷</text><text class="info-value">{{ displayTime(activity.startTime) }} - {{ displayTime(activity.endTime) }}</text></view>
+      <view class="info-line"><text class="info-icon">◇</text><text class="info-value">由 {{ activity.creatorName }} 发起</text></view>
+      <view v-if="activity.feeRule" class="notice"><text class="notice-label">费用说明</text><text>{{ activity.feeRule }}</text></view>
+      <view class="description-block"><text class="section-title">活动介绍</text><text class="body-text">{{ activity.description || '发起人暂未填写活动说明。' }}</text></view>
+      <view v-if="activity.creator && activity.invitationCode" class="invite">
+        <view><text class="invite-label">专属邀请码</text><text class="invite-code" selectable>{{ activity.invitationCode }}</text></view>
+        <button class="rotate-btn" @click="rotate">换一个</button>
+      </view>
+    </view>
+    <view v-if="!activity.joined" class="card form-card">
+      <view class="section-title">填写报名信息</view><text class="muted form-intro">补充信息，方便发起人更好地安排活动。</text>
+      <view class="field"><text class="field-label">身份或部门（选填）</text><input v-model="join.grade" class="input" placeholder="例如：摄影组" /></view>
+      <view class="field"><text class="field-label">同行人数（选填）</text><input v-model.number="join.passengerCount" class="input" type="number" placeholder="请输入人数" /></view>
+      <view class="field"><text class="field-label">备注（选填）</text><textarea v-model="join.remark" class="textarea" placeholder="饮食偏好、特殊需求等" /></view>
+      <button class="primary-btn" @click="signup">提交报名</button>
+    </view>
+    <view v-else class="card actions">
+      <button class="primary-btn" @click="room">进入活动空间</button>
+      <view class="action-grid">
+        <button class="secondary-btn" @click="vehicles">车辆信息</button>
+        <button v-if="activity.creator" class="secondary-btn" @click="members">参与者名单</button>
+        <button v-if="activity.creator" class="secondary-btn" @click="retryCover">{{ activity.coverUrl ? '更新封面' : '补传封面' }}</button>
+      </view>
+    </view>
+  </view>
 </template>
+
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { api, upload } from '@/services/api'
 import { displayTime } from '@/utils/time'
 import type { Activity } from '@/services/types'
-
 const id = ref(0)
 const code = ref('')
 const activity = ref<Activity | null>(null)
 const join = reactive<any>({ grade: '', passengerCount: undefined, remark: '', invitationCode: '' })
-
 onLoad((options: any) => {
   id.value = Number(options.id)
   code.value = options.code || ''
   join.invitationCode = code.value
 })
 onShow(load)
-
 async function load() {
   if (!id.value) return
   const query = code.value ? `?invitationCode=${encodeURIComponent(code.value)}` : ''
@@ -31,9 +62,37 @@ async function signup() {
   await load()
 }
 async function rotate() { activity.value = await api(`/activities/${id.value}/invitation-code/rotate`, 'POST') }
-function retryCover() { uni.chooseImage({ count: 1, sizeType: ['compressed'], success: async result => { activity.value = await upload(`/activities/${id.value}/cover`, result.tempFilePaths[0]); uni.showToast({ title: '封面已更新' }) } }) }
+function retryCover() {
+  uni.chooseImage({ count: 1, sizeType: ['compressed'], success: async result => {
+    activity.value = await upload(`/activities/${id.value}/cover`, result.tempFilePaths[0])
+    uni.showToast({ title: '封面已更新' })
+  } })
+}
 const room = () => uni.navigateTo({ url: `/pages/activityRoom/activityRoom?id=${id.value}` })
 const vehicles = () => uni.navigateTo({ url: `/pages/vehicleList/vehicleList?id=${id.value}&creator=${activity.value?.creator ? 1 : 0}` })
 const members = () => uni.navigateTo({ url: `/pages/signupList/signupList?id=${id.value}` })
 </script>
-<style scoped lang="scss">.hero{width:100%;height:360rpx;border-radius:$radius;margin-bottom:22rpx}.description{margin-top:24rpx;line-height:1.7}.invite{margin-top:22rpx;padding:18rpx;background:$primary-soft;border-radius:12rpx}.invite button{float:right}.gap{margin-top:16rpx}.actions button{width:100%}</style>
+
+<style scoped lang="scss">
+.detail-page { padding-top: 0; }
+.hero-wrap { position: relative; height: 400rpx; margin: 0 -28rpx 24rpx; overflow: hidden; }
+.hero { display: flex; width: 100%; height: 100%; }
+.hero-empty { align-items: center; justify-content: center; flex-direction: column; color: rgba(255,255,255,.85); font-size: 25rpx; background: linear-gradient(145deg, #0b5f59, #55ada3); gap: 10rpx; }
+.hero-mark { display: flex; align-items: center; justify-content: center; width: 82rpx; height: 82rpx; color: $primary; font-size: 38rpx; font-weight: 800; background: rgba(255,255,255,.92); border-radius: 50%; }
+.hero-tag { position: absolute; right: 26rpx; bottom: 24rpx; padding: 10rpx 18rpx; color: #fff; font-size: 22rpx; font-weight: 650; line-height: 1.3; white-space: nowrap; background: rgba(19,44,40,.66); border-radius: 999rpx; }
+.overview { overflow: visible; }
+.heading { align-items: flex-start; margin-bottom: 22rpx; }
+.notice { display: flex; align-items: flex-start; margin-top: 24rpx; padding: 20rpx; color: $text-secondary; font-size: 25rpx; line-height: 1.6; background: $accent-soft; border-radius: 18rpx; gap: 18rpx; }
+.notice-label { flex-shrink: 0; color: $warning; font-weight: 700; white-space: nowrap; }
+.description-block { margin-top: 30rpx; padding-top: 26rpx; border-top: 1rpx solid $border; }
+.description-block .section-title { display: block; }
+.invite { display: flex; align-items: center; justify-content: space-between; margin-top: 28rpx; padding: 22rpx; background: $primary-soft; border-radius: 18rpx; gap: 20rpx; }
+.invite > view { min-width: 0; }
+.invite-label, .invite-code { display: block; }
+.invite-label { color: $text-muted; font-size: 22rpx; line-height: 1.4; }
+.invite-code { margin-top: 5rpx; color: $primary-dark; font-size: 34rpx; font-weight: 800; line-height: 1.2; letter-spacing: 4rpx; word-break: break-all; }
+.rotate-btn { flex-shrink: 0; height: 60rpx; margin: 0; padding: 0 20rpx; color: $primary; font-size: 23rpx; line-height: 60rpx; white-space: nowrap; background: #fff; border-radius: 14rpx; }
+.actions { padding-top: 12rpx; }
+.action-grid { display: flex; flex-wrap: wrap; gap: 16rpx; }
+.action-grid .secondary-btn { flex: 1; min-width: 210rpx; margin-top: 0; }
+</style>

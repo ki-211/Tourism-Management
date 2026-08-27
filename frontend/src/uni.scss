@@ -1,3 +1,18 @@
 @import "uview-plus/theme.scss";
 
-$primary:#2563eb;$primary-soft:#eff6ff;$success:#16a34a;$danger:#dc2626;$warning:#d97706;$page-bg:#f5f7fa;$card-bg:#fff;$text-main:#172033;$text-muted:#697386;$border:#e5e9f0;$radius:18rpx;
+// Cross-platform design tokens shared by H5 and mp-weixin.
+$primary: #0f766e;
+$primary-dark: #115e59;
+$primary-soft: #e8f5f2;
+$accent: #f59e0b;
+$accent-soft: #fff7e6;
+$success: #16a34a;
+$danger: #dc4c4c;
+$warning: #d97706;
+$page-bg: #f4f7f6;
+$card-bg: #ffffff;
+$text-main: #172321;
+$text-secondary: #425652;
+$text-muted: #73827f;
+$border: #e1e9e7;
+$radius: 24rpx;
