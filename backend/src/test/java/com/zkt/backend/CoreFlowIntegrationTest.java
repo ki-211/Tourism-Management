@@ -80,8 +80,8 @@ class CoreFlowIntegrationTest {
     }
 
     @Test void locationSharingEnforcesMembershipExpiryAndActivityEnd() throws Exception {
-        register("location_owner"); register("location_member"); register("location_outsider");
-        JsonNode ownerLogin = login("location_owner"), memberLogin = login("location_member"), outsiderLogin = login("location_outsider");
+        register("location_owner"); register("location_member"); register("location_guest");
+        JsonNode ownerLogin = login("location_owner"), memberLogin = login("location_member"), outsiderLogin = login("location_guest");
         String ownerToken = ownerLogin.path("data").path("accessToken").asText();
         String memberToken = memberLogin.path("data").path("accessToken").asText();
         String outsiderToken = outsiderLogin.path("data").path("accessToken").asText();

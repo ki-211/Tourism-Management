@@ -3,6 +3,7 @@ package com.zkt.backend.location;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.zkt.backend.common.DomainException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ public class GeocodingService {
     private final RestClient client;
     private final String key;
 
+    @Autowired
     public GeocodingService(RestClient.Builder builder, @Value("${app.amap-web-key:}") String key) {
         HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
         JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
