@@ -1,5 +1,12 @@
 <template>
-  <view class="page profile-page">
+  <view class="page profile-page with-desktop-nav">
+    <DesktopNav active="profile" />
+    <view v-if="loading" class="loading-stack">
+      <view class="skeleton-card profile-skeleton"></view>
+      <view class="skeleton-card menu-skeleton"></view>
+    </view>
+    <LoadError v-else-if="error" :message="error" @retry="load" />
+    <template v-else>
     <view class="profile-hero">
       <view class="avatar">{{ user?.nickname?.slice(0, 1) || '行' }}</view>
       <view class="profile-copy"><text class="nickname">{{ user?.nickname || '旅行者' }}</text><text class="account">@{{ user?.username || '--' }}</text></view>
@@ -13,24 +20,38 @@
       <view class="menu-item" @click="edit"><view class="menu-icon">✎</view><view class="menu-copy"><text class="menu-title">个人资料</text><text class="muted">修改昵称与个人信息</text></view><text class="chevron">›</text></view>
     </view>
     <button class="logout-button" @click="logout">退出当前账号</button>
+    </template>
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
+import DesktopNav from '@/components/DesktopNav.vue'
+import LoadError from '@/components/LoadError.vue'
 import { api } from '@/services/api'
 import { refreshToken, requireSession } from '@/services/session'
 import { useSessionStore } from '@/stores/session'
 import type { User } from '@/services/types'
 const session = useSessionStore()
 const user = ref<User | null>(null)
-onShow(async () => {
+const loading = ref(true)
+const error = ref('')
+async function load() {
   if (!requireSession()) return
-  user.value = await api('/users/me')
-  uni.setStorageSync('tourism.user', user.value)
-  session.reload()
-})
+  loading.value = true
+  error.value = ''
+  try {
+    user.value = await api('/users/me')
+    uni.setStorageSync('tourism.user', user.value)
+    session.reload()
+  } catch (reason: any) {
+    error.value = reason?.message || '个人信息加载失败'
+  } finally {
+    loading.value = false
+  }
+}
+onShow(load)
 const edit = () => uni.navigateTo({ url: '/pages/editInfo/editInfo' })
 const history = () => uni.navigateTo({ url: '/pages/signDetail/signDetail' })
 async function logout() {
@@ -60,4 +81,6 @@ async function logout() {
 .chevron { flex-shrink: 0; color: #9baba8; font-size: 42rpx; }
 .divider { height: 1rpx; margin-left: 90rpx; background: $border; }
 .logout-button { width: 100%; height: 84rpx; margin-top: 32rpx; color: $danger; font-size: 26rpx; line-height: 84rpx; background: transparent; border: 1rpx solid rgba(220,76,76,.24); border-radius: 18rpx; }
+.profile-skeleton { height: 180rpx; }
+.menu-skeleton { height: 300rpx; }
 </style>

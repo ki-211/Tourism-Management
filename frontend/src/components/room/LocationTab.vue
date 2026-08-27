@@ -1,5 +1,8 @@
 <template>
   <view>
+    <view v-if="loading" class="loading-stack"><view class="skeleton-card map-skeleton"></view><view class="skeleton-card"></view></view>
+    <LoadError v-else-if="error" :message="error" @retry="load" />
+    <template v-else>
     <view v-if="!sharing" class="card welcome">
       <view class="section-title">主动开启位置共享</view>
       <view class="muted">仅活动参与者可查看；关闭或离开活动空间后立即停止。</view>
@@ -27,11 +30,13 @@
       <button class="primary-btn" @click="applyManual">开始共享此位置</button>
       <button class="secondary-btn" @click="manual = false">取消</button>
     </view>
+    </template>
   </view>
 </template>
 
 <script setup lang="ts">
 import { computed, onUnmounted, reactive, ref, watch } from 'vue'
+import LoadError from '@/components/LoadError.vue'
 import { api } from '@/services/api'
 import { displayTime } from '@/utils/time'
 import type { Location } from '@/services/types'
@@ -39,6 +44,7 @@ import type { Location } from '@/services/types'
 type Place = { address: string; latitude: number; longitude: number }
 const props = defineProps<{ activityId: number; refreshKey: number }>()
 const sharing = ref(false), manual = ref(false), locations = ref<Location[]>([]), timer = ref<any>()
+const loading = ref(true), error = ref('')
 const keyword = ref(''), places = ref<Place[]>([])
 const current = reactive({ latitude: 39.9042, longitude: 116.4074, address: '' })
 const manualForm = reactive({ latitude: 39.9042, longitude: 116.4074, address: '' })
@@ -48,7 +54,13 @@ const markers = computed(() => locations.value.map(location => ({
   width: 28, height: 36, iconPath: '/static/icons/marker.svg', callout: { content: location.nickname, display: 'ALWAYS', padding: 4 }
 })))
 
-async function load() { locations.value = await api(`/activities/${props.activityId}/locations`) }
+async function load() {
+  loading.value = true
+  error.value = ''
+  try { locations.value = await api(`/activities/${props.activityId}/locations`) }
+  catch (reason: any) { error.value = reason?.message || '位置列表加载失败'; locations.value = [] }
+  finally { loading.value = false }
+}
 watch(() => props.refreshKey, load, { immediate: true })
 function start() {
   uni.getLocation({ type: 'gcj02', isHighAccuracy: true, success: async (result: any) => {
@@ -72,4 +84,5 @@ onUnmounted(() => { if (timer.value) clearInterval(timer.value); if (sharing.val
 <style scoped lang="scss">
 .welcome{text-align:center;padding:60rpx 30rpx}.map{width:100%;height:52vh;border-radius:$radius}.gap{margin-top:14rpx}
 .search-row{display:flex;align-items:center;width:100%;gap:12rpx}.search-input{flex:1;min-width:0}.search-row button{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:116rpx;height:84rpx;margin:0;padding:0;color:#fff;line-height:1;white-space:nowrap;background:$primary;border-radius:16rpx}.place{padding:18rpx 4rpx;border-bottom:1px solid $border}
+.map-skeleton{height:52vh}
 </style>

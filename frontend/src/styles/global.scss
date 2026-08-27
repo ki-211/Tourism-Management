@@ -17,7 +17,12 @@ text, view, button, input, textarea {
 }
 
 /* #ifdef H5 */
-.page { max-width: 920px; min-height: calc(100vh - 44px); margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+.page { max-width: 1200px; min-height: calc(100vh - 44px); margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+@media (min-width: 900px) {
+  .page.with-desktop-nav { max-width: 1500px; margin: 0; padding-left: 264px; padding-right: 40px; }
+  uni-tabbar .uni-tabbar-bottom { display: none !important; }
+  uni-page-wrapper { padding-bottom: 0 !important; }
+}
 /* #endif */
 
 .card {
@@ -122,3 +127,15 @@ button[size="mini"] { min-height: 62rpx; padding: 0 22rpx; line-height: 62rpx; b
 .form-card { padding: 34rpx 30rpx; }
 .form-intro { margin-bottom: 30rpx; }
 .safe-bottom { padding-bottom: calc(24rpx + env(safe-area-inset-bottom)); }
+.loading-stack { width: 100%; }
+.skeleton-card {
+  width: 100%;
+  height: 230rpx;
+  margin-bottom: 24rpx;
+  overflow: hidden;
+  background: linear-gradient(100deg, #eaf0ee 20%, #f7faf9 42%, #eaf0ee 64%);
+  background-size: 300% 100%;
+  border-radius: $radius;
+  animation: skeleton-wave 1.35s ease-in-out infinite;
+}
+@keyframes skeleton-wave { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }

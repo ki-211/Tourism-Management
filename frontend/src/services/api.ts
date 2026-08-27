@@ -39,22 +39,27 @@ export async function api<T>(path: string, method: ApiMethod = 'GET', data?: unk
   }
 }
 
-function uploadRaw<T>(path: string, filePath: string, fields: Record<string, string>, token: string): Promise<T> {
-  return new Promise((resolve, reject) => uni.uploadFile({
+export type UploadProgress = (progress: number) => void
+
+function uploadRaw<T>(path: string, filePath: string, fields: Record<string, string>, token: string, onProgress?: UploadProgress): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const task = uni.uploadFile({
     url: API_BASE + path, filePath, name: 'file', formData: fields, header: { Authorization: `Bearer ${token}` },
     success: response => {
       const body = JSON.parse(response.data) as ApiEnvelope<T>
       if (response.statusCode < 300 && body.code === 'OK') resolve(body.data)
       else reject({ statusCode: response.statusCode, code: body.code, message: body.message || '上传失败' })
     }, fail: error => reject({ statusCode: 0, message: error.errMsg || '上传失败' })
-  }))
+    })
+    task.onProgressUpdate?.(result => onProgress?.(result.progress))
+  })
 }
 
-export async function upload<T>(path: string, filePath: string, fields: Record<string, string> = {}): Promise<T> {
-  try { return await uploadRaw(path, filePath, fields, accessToken()) }
+export async function upload<T>(path: string, filePath: string, fields: Record<string, string> = {}, onProgress?: UploadProgress): Promise<T> {
+  try { return await uploadRaw(path, filePath, fields, accessToken(), onProgress) }
   catch (error: any) {
     if (error.statusCode === 401 && refreshToken()) {
-      try { return await uploadRaw(path, filePath, fields, await renew()) } catch (retryError) { expireSession(retryError) }
+      try { return await uploadRaw(path, filePath, fields, await renew(), onProgress) } catch (retryError) { expireSession(retryError) }
     }
     uni.showToast({ title: error.message || '上传失败', icon: 'none' }); throw error
   }

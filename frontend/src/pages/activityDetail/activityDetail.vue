@@ -1,6 +1,8 @@
 <template>
   <view v-if="activity" class="page detail-page">
-    <view class="hero-wrap">
+    <view class="detail-layout">
+      <view class="detail-main">
+      <view class="hero-wrap">
       <image v-if="activity.coverUrl" class="hero" :src="activity.coverUrl" mode="aspectFill" />
       <view v-else class="hero hero-empty"><text class="hero-mark">行</text><text>一起去更远的地方</text></view>
       <text class="hero-tag">{{ activity.visibility === 'PUBLIC' ? '公开活动' : '邀请制活动' }}</text>
@@ -14,15 +16,17 @@
       <view class="description-block"><text class="section-title">活动介绍</text><text class="body-text">{{ activity.description || '发起人暂未填写活动说明。' }}</text></view>
       <view v-if="activity.creator && activity.invitationCode" class="invite">
         <view><text class="invite-label">专属邀请码</text><text class="invite-code" selectable>{{ activity.invitationCode }}</text></view>
-        <button class="rotate-btn" @click="rotate">换一个</button>
+        <button class="rotate-btn" :disabled="busy" @click="rotate">换一个</button>
       </view>
     </view>
+      </view>
+      <view class="detail-side">
     <view v-if="!activity.joined" class="card form-card">
       <view class="section-title">填写报名信息</view><text class="muted form-intro">补充信息，方便发起人更好地安排活动。</text>
       <view class="field"><text class="field-label">身份或部门（选填）</text><input v-model="join.grade" class="input" placeholder="例如：摄影组" /></view>
       <view class="field"><text class="field-label">同行人数（选填）</text><input v-model.number="join.passengerCount" class="input" type="number" placeholder="请输入人数" /></view>
       <view class="field"><text class="field-label">备注（选填）</text><textarea v-model="join.remark" class="textarea" placeholder="饮食偏好、特殊需求等" /></view>
-      <button class="primary-btn" @click="signup">提交报名</button>
+      <button class="primary-btn" :loading="busy" :disabled="busy" @click="signup">提交报名</button>
     </view>
     <view v-else class="card actions">
       <button class="primary-btn" @click="room">进入活动空间</button>
@@ -32,7 +36,11 @@
         <button v-if="activity.creator" class="secondary-btn" @click="retryCover">{{ activity.coverUrl ? '更新封面' : '补传封面' }}</button>
       </view>
     </view>
+      </view>
+    </view>
   </view>
+  <view v-else-if="loading" class="page"><view class="skeleton-card detail-skeleton"></view><view class="skeleton-card"></view><view class="skeleton-card"></view></view>
+  <view v-else class="page"><view class="empty">活动加载失败<button class="secondary-btn" @click="load">重新加载</button></view></view>
 </template>
 
 <script setup lang="ts">
@@ -44,6 +52,8 @@ import type { Activity } from '@/services/types'
 const id = ref(0)
 const code = ref('')
 const activity = ref<Activity | null>(null)
+const loading = ref(true)
+const busy = ref(false)
 const join = reactive<any>({ grade: '', passengerCount: undefined, remark: '', invitationCode: '' })
 onLoad((options: any) => {
   id.value = Number(options.id)
@@ -53,15 +63,26 @@ onLoad((options: any) => {
 onShow(load)
 async function load() {
   if (!id.value) return
+  loading.value = true
   const query = code.value ? `?invitationCode=${encodeURIComponent(code.value)}` : ''
-  activity.value = await api(`/activities/${id.value}${query}`)
+  try { activity.value = await api(`/activities/${id.value}${query}`) }
+  finally { loading.value = false }
 }
 async function signup() {
-  await api(`/activities/${id.value}/signups`, 'POST', join)
-  code.value = ''
-  await load()
+  if (busy.value) return
+  busy.value = true
+  try {
+    await api(`/activities/${id.value}/signups`, 'POST', join)
+    code.value = ''
+    await load()
+  } finally { busy.value = false }
 }
-async function rotate() { activity.value = await api(`/activities/${id.value}/invitation-code/rotate`, 'POST') }
+async function rotate() {
+  if (busy.value) return
+  busy.value = true
+  try { activity.value = await api(`/activities/${id.value}/invitation-code/rotate`, 'POST') }
+  finally { busy.value = false }
+}
 function retryCover() {
   uni.chooseImage({ count: 1, sizeType: ['compressed'], success: async result => {
     activity.value = await upload(`/activities/${id.value}/cover`, result.tempFilePaths[0])
@@ -75,6 +96,7 @@ const members = () => uni.navigateTo({ url: `/pages/signupList/signupList?id=${i
 
 <style scoped lang="scss">
 .detail-page { padding-top: 0; }
+.detail-skeleton { height: 400rpx; }
 .hero-wrap { position: relative; height: 400rpx; margin: 0 -28rpx 24rpx; overflow: hidden; }
 .hero { display: flex; width: 100%; height: 100%; }
 .hero-empty { align-items: center; justify-content: center; flex-direction: column; color: rgba(255,255,255,.85); font-size: 25rpx; background: linear-gradient(145deg, #0b5f59, #55ada3); gap: 10rpx; }
@@ -95,4 +117,13 @@ const members = () => uni.navigateTo({ url: `/pages/signupList/signupList?id=${i
 .actions { padding-top: 12rpx; }
 .action-grid { display: flex; flex-wrap: wrap; gap: 16rpx; }
 .action-grid .secondary-btn { flex: 1; min-width: 210rpx; margin-top: 0; }
+/* #ifdef H5 */
+@media (min-width: 900px) {
+  .detail-page { max-width: 1280px; padding-top: 32px; }
+  .detail-layout { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(320px, .75fr); align-items: start; gap: 28px; }
+  .detail-main, .detail-side { min-width: 0; }
+  .detail-side { position: sticky; top: 70px; }
+  .hero-wrap { margin: 0 0 24rpx; border-radius: $radius; }
+}
+/* #endif */
 </style>

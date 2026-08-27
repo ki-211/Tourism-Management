@@ -1,5 +1,6 @@
 <template>
-  <view class="page home-page">
+  <view class="page home-page with-desktop-nav">
+    <DesktopNav active="home" />
     <view class="hero-head">
       <view class="hero-copy">
         <text class="eyebrow">EXPLORE TOGETHER</text>
@@ -13,27 +14,36 @@
       <button class="quick-item primary-quick" @click="create"><text class="quick-icon">＋</text><view><text class="quick-title">发布活动</text><text class="quick-desc">创建新的旅程</text></view></button>
     </view>
     <view class="list-head row-between"><view><text class="section-title">精选活动</text><text class="muted">看看大家最近都在计划什么</text></view><text v-if="list.length" class="count">{{ list.length }} 个</text></view>
-    <ActivityCard v-for="item in list" :key="item.id" :activity="item" @open="open" />
-    <view v-if="!loading && !list.length" class="empty">暂时还没有公开活动<br>去发布第一场活动吧</view>
+    <view v-if="loading" class="loading-stack"><view v-for="item in 3" :key="item" class="skeleton-card home-skeleton"></view></view>
+    <LoadError v-else-if="error" :message="error" @retry="load" />
+    <view v-else class="activity-grid"><ActivityCard v-for="item in list" :key="item.id" :activity="item" @open="open" /></view>
+    <view v-if="!loading && !error && !list.length" class="empty">暂时还没有公开活动<br>去发布第一场活动吧</view>
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onPullDownRefresh, onShow } from '@dcloudio/uni-app'
 import ActivityCard from '@/components/ActivityCard.vue'
+import DesktopNav from '@/components/DesktopNav.vue'
+import LoadError from '@/components/LoadError.vue'
 import { api } from '@/services/api'
 import { requireSession } from '@/services/session'
 import type { Activity, PageData } from '@/services/types'
 
 const list = ref<Activity[]>([])
 const loading = ref(false)
-onShow(async () => {
+const error = ref('')
+async function load() {
   if (!requireSession()) return
   loading.value = true
+  error.value = ''
   try { list.value = (await api<PageData<Activity>>('/activities?scope=discover&size=50')).items }
+  catch (reason: any) { error.value = reason?.message || '活动列表加载失败'; list.value = [] }
   finally { loading.value = false }
-})
+}
+onShow(load)
+onPullDownRefresh(async () => { try { await load() } finally { uni.stopPullDownRefresh() } })
 const open = (id: number) => uni.navigateTo({ url: `/pages/activityDetail/activityDetail?id=${id}` })
 const create = () => uni.navigateTo({ url: '/pages/activityCreate/activityCreate' })
 const invite = () => uni.navigateTo({ url: '/pages/invite/invite' })
@@ -62,4 +72,8 @@ const invite = () => uni.navigateTo({ url: '/pages/invite/invite' })
 .list-head { align-items: flex-end; margin-bottom: 20rpx; }
 .list-head .section-title { display: block; margin-bottom: 4rpx; }
 .count { flex-shrink: 0; color: $primary; font-size: 24rpx; }
+.home-skeleton { height: 500rpx; }
+/* #ifdef H5 */
+@media (min-width: 900px) { .activity-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; } }
+/* #endif */
 </style>
