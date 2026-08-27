@@ -8,11 +8,11 @@
 docker compose up -d --build
 ```
 
-生产 JWT 密钥需为至少 32 字节随机值的 Base64。`AMAP_WEB_KEY` 必须是高德 Web Service Key，不是 H5 JS Key。生产环境禁用 Swagger，不把任何密钥打进前端镜像。
+生产 JWT 密钥需为至少 32 字节随机值的 Base64。地图需要三类配置：后端 `AMAP_WEB_KEY` 使用高德 Web Service Key；H5 构建参数 `VITE_AMAP_JS_KEY` 使用高德 JS API Key；安全校验二选一配置 `AMAP_H5_SECURITY_JS_CODE` 或 `AMAP_H5_SERVICE_HOST`。构建脚本只在编译期间注入客户端配置并恢复源文件，仓库不得提交真实值。未配置客户端 Key 时 H5 会显示明确提示并保留成员位置列表，不渲染空白地图。
 
 ## HTTPS / WSS
 
-`deploy/nginx.conf` 展示同域反代：`/api/` 到后端，`/ws` 以 Upgrade 头转发，其他请求回退到 H5 `index.html`。正式环境需替换证书路径和域名，并只开放 HTTPS。微信小程序后台需登记 request/uploadFile/downloadFile/socket 合法域名。
+`deploy/nginx.conf` 展示同域反代：`/api/` 到后端，`/ws` 以 Upgrade 头转发，其他请求回退到 H5 `index.html`。正式环境需替换证书路径和域名，并只开放 HTTPS。微信小程序后台需登记 request/uploadFile/downloadFile/socket 合法域名，并为 AppID 申请后台持续定位能力；小程序产物的 `requiredBackgroundModes` 必须包含 `location`。
 
 ## 备份与恢复
 
@@ -25,7 +25,8 @@ docker compose up -d --build
 ## 常见故障
 
 - `401`：访问令牌过期且刷新失败，前端会清空会话并回登录页。
-- H5 无法定位：检查 HTTPS、浏览器权限与系统定位；可改用地址搜索或手动坐标。
+- H5 地图未配置：检查 `VITE_AMAP_JS_KEY` 以及安全密钥或安全代理；定位还需 HTTPS、浏览器权限与系统定位。
+- 微信后台位置无法启动：检查 AppID 的后台定位能力、隐私声明、基础库版本和用户授权。
 - 小程序无法请求：检查合法域名、TLS 证书和 `VITE_API_BASE_URL`。
 - 图片失败：确认格式是真实 JPEG/PNG/WebP 且不超过 10 MB，检查 S3 bucket 权限。
 - WebSocket 连接失败：检查 `/ws` Upgrade 反代、Origin 白名单和 ticket 是否过期。

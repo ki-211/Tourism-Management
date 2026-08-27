@@ -32,8 +32,10 @@ import LoadError from '@/components/LoadError.vue'
 import { api } from '@/services/api'
 import { refreshToken, requireSession } from '@/services/session'
 import { useSessionStore } from '@/stores/session'
+import { useLocationSharingStore } from '@/stores/locationSharing'
 import type { User } from '@/services/types'
 const session = useSessionStore()
+const locationSharing = useLocationSharingStore()
 const user = ref<User | null>(null)
 const loading = ref(true)
 const error = ref('')
@@ -55,7 +57,7 @@ onShow(load)
 const edit = () => uni.navigateTo({ url: '/pages/editInfo/editInfo' })
 const history = () => uni.navigateTo({ url: '/pages/signDetail/signDetail' })
 async function logout() {
-  try { await api('/auth/logout', 'POST', { refreshToken: refreshToken() }) }
+  try { await locationSharing.stop(true); await api('/auth/logout', 'POST', { refreshToken: refreshToken() }) }
   finally { session.clear(); uni.reLaunch({ url: '/pages/login/login' }) }
 }
 </script>

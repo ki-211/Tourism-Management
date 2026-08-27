@@ -85,6 +85,23 @@ $user = {
     $path.Dispose()
 }
 
+$marker = {
+    param($g, $pen, $color)
+    $path = [System.Drawing.Drawing2D.GraphicsPath]::new()
+    $path.AddBezier(32, 57, 27, 49, 13, 36, 13, 24)
+    $path.AddBezier(13, 24, 13, 11, 21, 5, 32, 5)
+    $path.AddBezier(32, 5, 43, 5, 51, 11, 51, 24)
+    $path.AddBezier(51, 24, 51, 36, 37, 49, 32, 57)
+    $path.CloseFigure()
+    $brush = [System.Drawing.SolidBrush]::new($color)
+    $g.FillPath($brush, $path)
+    $inner = [System.Drawing.SolidBrush]::new([System.Drawing.Color]::White)
+    $g.FillEllipse($inner, 24, 16, 16, 16)
+    $inner.Dispose()
+    $brush.Dispose()
+    $path.Dispose()
+}
+
 $icons = @(
     @{ Base = 'discover-v2'; Legacy = 'list'; Draw = $discover },
     @{ Base = 'checkin-v2'; Legacy = 'sign'; Draw = $checkin },
@@ -98,3 +115,6 @@ foreach ($icon in $icons) {
     New-TabIcon ($icon.Legacy + '.png') '#7A8986' $icon.Draw
     New-TabIcon ($icon.Legacy + '-active.png') '#0F766E' $icon.Draw
 }
+
+New-TabIcon 'marker-self.png' '#0F766E' $marker
+New-TabIcon 'marker-member.png' '#E76F51' $marker

@@ -4,6 +4,7 @@ import type { ApiEnvelope } from './types'
 export const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1').replace(/\/$/, '')
 let refreshing: Promise<string> | null = null
 type ApiMethod = NonNullable<UniApp.RequestOptions['method']> | 'PATCH'
+type ApiOptions = { silent?: boolean }
 
 function raw<T>(path: string, method: ApiMethod, data?: unknown, token = accessToken()): Promise<T> {
   return new Promise((resolve, reject) => uni.request({
@@ -25,16 +26,16 @@ async function renew() {
 }
 
 function expireSession(error: unknown): never {
-  clearSession(); uni.reLaunch({ url: '/pages/login/login' }); throw error
+  uni.$emit('session-expired'); clearSession(); uni.reLaunch({ url: '/pages/login/login' }); throw error
 }
 
-export async function api<T>(path: string, method: ApiMethod = 'GET', data?: unknown): Promise<T> {
+export async function api<T>(path: string, method: ApiMethod = 'GET', data?: unknown, options: ApiOptions = {}): Promise<T> {
   try { return await raw<T>(path, method, data) }
   catch (error: any) {
     if (error.statusCode === 401 && refreshToken() && !path.startsWith('/auth/')) {
       try { return await raw<T>(path, method, data, await renew()) } catch (retryError) { expireSession(retryError) }
     }
-    if (error.statusCode !== 401) uni.showToast({ title: error.message || '请求失败', icon: 'none' })
+    if (error.statusCode !== 401 && !options.silent) uni.showToast({ title: error.message || '请求失败', icon: 'none' })
     throw error
   }
 }

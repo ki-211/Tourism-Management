@@ -26,4 +26,7 @@ public class DomainException extends RuntimeException {
     public static DomainException conflict(String code, String message) {
         return new DomainException(HttpStatus.CONFLICT, code, message);
     }
+    public static DomainException unavailable(String code, String message) {
+        return new DomainException(HttpStatus.BAD_GATEWAY, code, message);
+    }
 }

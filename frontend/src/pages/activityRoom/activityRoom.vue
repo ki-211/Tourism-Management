@@ -7,7 +7,7 @@
       <ChatTab v-if="tab === 0" :activity-id="id" :refresh-key="refreshKey" />
       <SignTab v-if="tab === 1" :activity-id="id" :creator="activity.creator" :refresh-key="refreshKey" />
       <AlbumTab v-if="tab === 2" :activity-id="id" :refresh-key="refreshKey" />
-      <LocationTab v-if="tab === 3" :activity-id="id" :refresh-key="refreshKey" />
+      <LocationTab v-if="tab === 3" :activity-id="id" :activity-end-time="activity.endTime" :refresh-key="refreshKey" :room-event="roomEvent" />
     </template>
   </view>
 </template>
@@ -31,6 +31,7 @@ const tabs = ['聊天', '签到', '相册', '位置']
 const refreshKey = ref(0)
 const loading = ref(true)
 const error = ref('')
+const roomEvent = ref<any>(null)
 let socket: ActivitySocket | null = null
 
 async function loadActivity() {
@@ -46,7 +47,10 @@ async function loadActivity() {
     }
     if (!socket) {
       socket = new ActivitySocket(id.value)
-      socket.on(() => refreshKey.value++)
+      socket.on(event => {
+        if (event?.type === 'LOCATION_UPDATED' || event?.type === 'LOCATION_REMOVED') roomEvent.value = event
+        else refreshKey.value++
+      })
       await socket.connect()
     }
   } catch (reason: any) {

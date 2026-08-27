@@ -46,7 +46,11 @@ services:
   frontend:
     build:
       context: ./frontend
-      args: { VITE_API_BASE_URL: /api/v1 }
+      args:
+        VITE_API_BASE_URL: /api/v1
+        VITE_AMAP_JS_KEY: ${VITE_AMAP_JS_KEY:-}
+        AMAP_H5_SECURITY_JS_CODE: ${AMAP_H5_SECURITY_JS_CODE:-}
+        AMAP_H5_SERVICE_HOST: ${AMAP_H5_SERVICE_HOST:-}
     restart: unless-stopped
     depends_on: [backend]
     ports: ["${HTTP_PORT:-80}:80"]

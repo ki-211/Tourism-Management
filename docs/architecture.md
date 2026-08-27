@@ -4,7 +4,7 @@
 
 后端按 `auth`、`activity`、`attendance`、`room`、`location`、`media`、`vehicle`、`common` 划分。Controller 只处理协议和校验，Service 负责事务与权限，Repository 负责持久化。操作者始终来自 JWT，不接受客户端传入的 `userId` 或 `creatorId`。
 
-前端以 `services/api.ts` 统一请求和一次性刷新，以 `services/realtime.ts` 管理 WebSocket。活动空间拆为聊天、签到、相册和位置四个组件，父页面销毁时关闭连接，各组件清理自己的定时器和位置共享。
+前端以 `services/api.ts` 统一请求和一次性刷新，以 `services/realtime.ts` 管理 WebSocket。活动空间拆为聊天、签到、相册和位置四个组件；位置共享由全局 Pinia Store 管理，因此切换活动空间标签不会中断共享，地图组件只负责展示成员位置和处理增量事件。
 
 ## 数据与一致性
 
@@ -20,4 +20,4 @@ HTTP 是最终事实来源。WebSocket 仅推送 `CHAT_CREATED`、`SIGN_TASK_CRE
 
 图片先按文件头识别，只允许 JPEG、PNG、WebP，单文件不超过 10 MB，并使用随机对象名。本地 profile 写入本地目录；生产 profile 使用 S3 兼容存储。
 
-位置坐标由端侧通过原生 `uni.getLocation` 获取。地址搜索和逆地理编码由后端代理高德 Web Service，Key 不下发前端。位置记录按活动和用户唯一，关闭即删除，查询只返回 60 秒内的活跃数据。
+位置坐标统一使用 GCJ-02。微信小程序通过后台位置监听更新，H5 仅在页面可见时轮询；移动约 20 米或最长 60 秒上报一次。地址搜索和逆地理编码由后端代理高德 Web Service。位置记录按活动和用户唯一，关闭即删除，查询只返回 90 秒内且活动未结束的数据。

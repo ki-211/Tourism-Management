@@ -2,6 +2,7 @@
 import { onLaunch } from '@dcloudio/uni-app'
 import { hasSession, clearSession } from '@/services/session'
 import { useSessionStore } from '@/stores/session'
+import { useLocationSharingStore } from '@/stores/locationSharing'
 
 onLaunch(() => {
   if (!hasSession()) {
@@ -9,6 +10,9 @@ onLaunch(() => {
     uni.reLaunch({ url: '/pages/login/login' })
   }
   useSessionStore().reload()
+  const locationSharing = useLocationSharingStore()
+  uni.$on('session-expired', () => locationSharing.stop(false))
+  locationSharing.initialize()
 })
 </script>
 
