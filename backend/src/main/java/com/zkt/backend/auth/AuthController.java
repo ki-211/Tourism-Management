@@ -12,8 +12,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 @RequestMapping("/api/v1/auth")
 public class AuthController {
     private final AuthService service;
-    private final JwtService jwt;
-    public AuthController(AuthService service, JwtService jwt) { this.service = service; this.jwt = jwt; }
+    private final WebSocketTicketService tickets;
+    public AuthController(AuthService service, WebSocketTicketService tickets) { this.service = service; this.tickets = tickets; }
 
     @PostMapping("/register")
     ApiResponse<AuthService.UserView> register(@Valid @RequestBody RegisterRequest r) {
@@ -29,7 +29,8 @@ public class AuthController {
         service.logout(r.refreshToken()); return ApiResponse.ok("已退出登录", null);
     }
     @PostMapping("/ws-ticket") ApiResponse<WsTicket> wsTicket(@AuthenticationPrincipal UserPrincipal p) {
-        return ApiResponse.ok(new WsTicket(jwt.createWebSocketTicket(p.id()), 60));
+        WebSocketTicketService.IssuedTicket issued = tickets.issue(p.id());
+        return ApiResponse.ok(new WsTicket(issued.ticket(), issued.expiresIn()));
     }
 
     public record RegisterRequest(

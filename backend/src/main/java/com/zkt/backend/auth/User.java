@@ -19,6 +19,10 @@ public class User {
     private String nickname;
     @Column(nullable = false, length = 20)
     private String role = "USER";
+    @Column(name = "token_version", nullable = false)
+    private Long tokenVersion = 0L;
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
     @Column(name = "updated_at", nullable = false)

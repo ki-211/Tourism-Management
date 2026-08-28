@@ -9,7 +9,7 @@
         <view class="member-copy"><view class="section-title">{{ member.nickname }}</view><text class="muted">@{{ member.username }} · {{ member.grade || '未填写身份或部门' }}</text></view>
       </view>
       <view class="member-details">
-        <view><text class="detail-label">同行人数</text><text class="detail-value">{{ member.passengerCount ?? '未填写' }}</text></view>
+        <view><text class="detail-label">随行人数</text><text class="detail-value">{{ member.passengerCount ?? '未填写' }}</text></view>
         <view><text class="detail-label">备注</text><text class="detail-value">{{ member.remark || '无' }}</text></view>
       </view>
       <button class="transfer-btn" :disabled="transferring" @click="transfer(member.userId)">转让负责人</button>

@@ -2,13 +2,13 @@
   <view class="page auth">
     <view class="brand-block">
       <view class="logo-mark"><text>行</text></view>
-      <text class="eyebrow">TRAVEL TOGETHER</text>
-      <view class="brand">同行集</view>
-      <text class="slogan">让每一次出发，都有人同行、有序抵达</text>
+      <text class="eyebrow">ACTIVITY HUB</text>
+      <view class="brand">协作集</view>
+      <text class="slogan">让每一场活动，都有人协作、有序完成</text>
     </view>
     <view class="card auth-card">
       <view class="section-title">欢迎回来</view>
-      <text class="muted form-intro">登录后继续管理你的活动与旅程</text>
+      <text class="muted form-intro">登录后继续管理你的活动与协作</text>
       <view class="field"><text class="field-label">用户名</text><input v-model="form.username" class="input" placeholder="请输入用户名" /></view>
       <view class="field"><text class="field-label">密码</text><input v-model="form.password" class="input" password placeholder="请输入 8-64 位密码" /></view>
       <button class="primary-btn" :loading="loading" @click="login">登录</button>

@@ -11,6 +11,9 @@ spring:
     clean-disabled: false
   h2.console.enabled: false
 app:
+  time-zone: Asia/Shanghai
+  realtime.mode: local
+  rate-limit.enabled: false
   jwt.secret: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
   storage:
     type: local

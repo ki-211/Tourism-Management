@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import java.security.SecureRandom;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -27,13 +28,15 @@ public class ActivityService {
     private final MediaService media;
     private final RoomEventPublisher events;
     private final SharedLocationRepository locations;
+    private final Clock clock;
     private final SecureRandom random = new SecureRandom();
 
     public ActivityService(ActivityRepository activities, SignupRepository signups, UserRepository users,
                            MediaAssetRepository assets, MediaService media, RoomEventPublisher events,
-                           SharedLocationRepository locations) {
+                           SharedLocationRepository locations, Clock clock) {
         this.activities = activities; this.signups = signups; this.users = users; this.assets = assets; this.media = media; this.events = events;
         this.locations = locations;
+        this.clock = clock;
     }
 
     @Transactional
@@ -52,7 +55,7 @@ public class ActivityService {
     @Transactional
     public ActivityView join(Long userId, Long activityId, JoinCommand c) {
         Activity a = find(activityId);
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(clock);
         if (now.isBefore(a.getSignupStart()) || now.isAfter(a.getSignupEnd()))
             throw DomainException.badRequest("SIGNUP_CLOSED", "当前不在报名时间内");
         if (signups.existsByActivityIdAndUserId(activityId, userId))
@@ -101,7 +104,10 @@ public class ActivityService {
     @Transactional
     public ActivityView uploadCover(Long actorId, Long activityId, MultipartFile file) {
         Activity a = creatorActivity(actorId, activityId);
+        MediaAsset old = a.getCoverMediaId() == null ? null : assets.findById(a.getCoverMediaId()).orElse(null);
         MediaAsset asset = media.saveImage(actorId, "COVER", file); a.setCoverMediaId(asset.getId());
+        activities.saveAndFlush(a);
+        if (old != null) media.removeAfterCommit(old);
         return view(a, actorId);
     }
 
@@ -127,7 +133,7 @@ public class ActivityService {
         Page<Activity> result = switch (scope == null ? "discover" : scope) {
             case "joined" -> activities.findJoined(userId, pr);
             case "created" -> activities.findByCreatorIdOrderByCreatedAtDesc(userId, pr);
-            case "open" -> activities.findOpen(ActivityVisibility.PUBLIC, LocalDateTime.now(), pr);
+            case "open" -> activities.findOpen(ActivityVisibility.PUBLIC, LocalDateTime.now(clock), pr);
             default -> activities.findByVisibilityOrderByCreatedAtDesc(ActivityVisibility.PUBLIC, pr);
         };
         return result.map(a -> view(a, userId));
@@ -151,7 +157,7 @@ public class ActivityService {
 
     private ActivityView view(Activity a, Long viewerId) {
         User creator = users.findById(a.getCreatorId()).orElseThrow();
-        String cover = a.getCoverMediaId() == null ? null : assets.findById(a.getCoverMediaId()).map(media::view).map(MediaService.MediaView::url).orElse(null);
+        String cover = a.getCoverMediaId() == null ? null : assets.findById(a.getCoverMediaId()).map(asset -> media.view(asset, viewerId)).map(MediaService.MediaView::url).orElse(null);
         boolean creatorView = a.getCreatorId().equals(viewerId);
         return new ActivityView(a.getId(), a.getTitle(), a.getDescription(), a.getLocation(), a.getStartTime(), a.getEndTime(),
                 a.getSignupStart(), a.getSignupEnd(), a.getVisibility(), creatorView ? a.getInvitationCode() : null,

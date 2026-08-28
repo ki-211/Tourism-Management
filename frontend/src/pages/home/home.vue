@@ -4,14 +4,14 @@
     <view class="hero-head">
       <view class="hero-copy">
         <text class="eyebrow">EXPLORE TOGETHER</text>
-        <view class="page-title">发现下一段同行</view>
-        <text class="hero-sub">从报名到出发，把每一次相聚安排得从容有序。</text>
+        <view class="page-title">发现下一场活动</view>
+        <text class="hero-sub">从报名到结束，把每一次协作安排得清晰有序。</text>
       </view>
       <view class="sun"><text>↗</text></view>
     </view>
     <view class="quick-actions">
       <button class="quick-item" @click="invite"><text class="quick-icon">⌁</text><view><text class="quick-title">邀请码</text><text class="quick-desc">加入专属活动</text></view></button>
-      <button class="quick-item primary-quick" @click="create"><text class="quick-icon">＋</text><view><text class="quick-title">发布活动</text><text class="quick-desc">创建新的旅程</text></view></button>
+      <button class="quick-item primary-quick" @click="create"><text class="quick-icon">＋</text><view><text class="quick-title">发布活动</text><text class="quick-desc">创建新的活动</text></view></button>
     </view>
     <view class="list-head row-between"><view><text class="section-title">精选活动</text><text class="muted">看看大家最近都在计划什么</text></view><text v-if="list.length" class="count">{{ list.length }} 个</text></view>
     <view v-if="loading" class="loading-stack"><view v-for="item in 3" :key="item" class="skeleton-card home-skeleton"></view></view>

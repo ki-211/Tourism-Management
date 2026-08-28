@@ -24,7 +24,7 @@
     <view v-if="!activity.joined" class="card form-card">
       <view class="section-title">填写报名信息</view><text class="muted form-intro">补充信息，方便发起人更好地安排活动。</text>
       <view class="field"><text class="field-label">身份或部门（选填）</text><input v-model="join.grade" class="input" placeholder="例如：摄影组" /></view>
-      <view class="field"><text class="field-label">同行人数（选填）</text><input v-model.number="join.passengerCount" class="input" type="number" placeholder="请输入人数" /></view>
+      <view class="field"><text class="field-label">随行人数（选填）</text><input v-model.number="join.passengerCount" class="input" type="number" placeholder="请输入人数" /></view>
       <view class="field"><text class="field-label">备注（选填）</text><textarea v-model="join.remark" class="textarea" placeholder="饮食偏好、特殊需求等" /></view>
       <button class="primary-btn" :loading="busy" :disabled="busy" @click="signup">提交报名</button>
     </view>

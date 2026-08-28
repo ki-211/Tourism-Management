@@ -11,3 +11,8 @@ springdoc:
   swagger-ui.enabled: false
 app:
   storage.type: s3
+  realtime.mode: redis
+management:
+  endpoint:
+    health:
+      show-details: never

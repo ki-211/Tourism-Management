@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zkt.backend.location.SharedLocation;
 import com.zkt.backend.location.SharedLocationRepository;
+import com.zkt.backend.auth.WebSocketTicketService;
+import com.zkt.backend.auth.UserRepository;
+import com.zkt.backend.auth.AuthService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -11,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.mock.web.MockMultipartFile;
 
 import java.time.LocalDateTime;
 import java.time.Duration;
@@ -19,6 +23,7 @@ import java.util.Map;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -27,6 +32,79 @@ class CoreFlowIntegrationTest {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper mapper;
     @Autowired SharedLocationRepository sharedLocations;
+    @Autowired WebSocketTicketService webSocketTickets;
+    @Autowired UserRepository users;
+    @Autowired AuthService authService;
+
+    @Test void websocketTicketCanOnlyBeConsumedOnce() throws Exception {
+        register("websocket_user");
+        Long userId = users.findByUsername("websocket_user").orElseThrow().getId();
+        WebSocketTicketService.IssuedTicket issued = webSocketTickets.issue(userId);
+        assertThat(webSocketTickets.consume(issued.ticket())).isEqualTo(userId);
+        assertThatThrownBy(() -> webSocketTickets.consume(issued.ticket())).isInstanceOf(IllegalArgumentException.class);
+        WebSocketTicketService.IssuedTicket revoked = webSocketTickets.issue(userId);
+        authService.logoutAll(userId);
+        assertThatThrownBy(() -> webSocketTickets.consume(revoked.ticket())).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test void deletingAccountAnonymizesUserAndRevokesLogin() throws Exception {
+        register("delete_user");
+        JsonNode login = login("delete_user");
+        String access = login.path("data").path("accessToken").asText();
+        mvc.perform(delete("/api/v1/users/me").header("Authorization", bearer(access))
+                        .contentType(MediaType.APPLICATION_JSON).content(json(Map.of("password", "Password123!"))))
+                .andExpect(status().isOk());
+        mvc.perform(get("/api/v1/users/me").header("Authorization", bearer(access))).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("username", "delete_user", "password", "Password123!"))))
+                .andExpect(status().isUnauthorized());
+        assertThat(users.findByUsername("delete_user")).isEmpty();
+    }
+
+    @Test void changingPasswordRevokesAccessAndRefreshTokens() throws Exception {
+        register("password_user");
+        JsonNode login = login("password_user");
+        String access = login.path("data").path("accessToken").asText();
+        String refresh = login.path("data").path("refreshToken").asText();
+        mvc.perform(put("/api/v1/users/me/password").header("Authorization", bearer(access))
+                        .contentType(MediaType.APPLICATION_JSON).content(json(Map.of(
+                                "currentPassword", "Password123!", "newPassword", "NewPassword456!"))))
+                .andExpect(status().isOk());
+        mvc.perform(get("/api/v1/users/me").header("Authorization", bearer(access))).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/v1/auth/refresh").contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("refreshToken", refresh))))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("username", "password_user", "password", "NewPassword456!"))))
+                .andExpect(status().isOk());
+    }
+
+    @Test void privateAlbumUrlRechecksMembershipAndPhotoCanBeDeleted() throws Exception {
+        register("media_owner"); register("media_member");
+        JsonNode owner = login("media_owner"), member = login("media_member");
+        String ownerToken = owner.path("data").path("accessToken").asText();
+        String memberToken = member.path("data").path("accessToken").asText();
+        LocalDateTime now = LocalDateTime.now().withNano(0);
+        long activityId = createActivity(ownerToken, "媒体权限活动", now.minusMinutes(1), now.plusHours(1), now.plusHours(2), now.plusHours(3));
+        mvc.perform(post("/api/v1/activities/{id}/signups", activityId).header("Authorization", bearer(memberToken))
+                        .contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isOk());
+        MockMultipartFile image = new MockMultipartFile("file", "photo.png", "image/png",
+                new byte[]{(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1});
+        JsonNode uploaded = body(mvc.perform(multipart("/api/v1/activities/{id}/photos", activityId).file(image)
+                        .header("Authorization", bearer(memberToken))).andExpect(status().isOk()).andReturn());
+        long photoId = uploaded.path("data").path("id").asLong();
+        String signedUrl = uploaded.path("data").path("url").asText();
+        java.net.URI uri = java.net.URI.create(signedUrl);
+        String token = java.net.URLDecoder.decode(uri.getRawQuery().substring("token=".length()), java.nio.charset.StandardCharsets.UTF_8);
+        mvc.perform(get(uri.getPath()).param("token", token)).andExpect(status().isOk());
+        mvc.perform(delete("/api/v1/activities/{id}/signups/me", activityId).header("Authorization", bearer(memberToken)))
+                .andExpect(status().isOk());
+        mvc.perform(get(uri.getPath()).param("token", token)).andExpect(status().isForbidden());
+        mvc.perform(delete("/api/v1/activities/{id}/photos/{photoId}", activityId, photoId)
+                        .header("Authorization", bearer(ownerToken))).andExpect(status().isOk());
+        mvc.perform(get(uri.getPath()).param("token", token)).andExpect(status().isNotFound());
+    }
 
     @Test void refreshTokenRotatesAndOldTokenCannotBeReused() throws Exception {
         register("rotate_user");

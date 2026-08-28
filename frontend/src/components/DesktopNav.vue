@@ -1,14 +1,14 @@
 <template>
   <!-- #ifdef H5 -->
   <view class="desktop-sidebar">
-    <view class="desktop-brand"><view class="brand-mark">行</view><view><text class="brand-name">同行集</text><text class="brand-sub">TRAVEL TOGETHER</text></view></view>
+    <view class="desktop-brand"><view class="brand-mark">协</view><view><text class="brand-name">协作集</text><text class="brand-sub">ACTIVITY HUB</text></view></view>
     <view class="desktop-menu">
       <button v-for="item in items" :key="item.key" :class="{ active: active === item.key }" @click="go(item.url)">
         <image :src="active === item.key ? item.activeIcon : item.icon" mode="aspectFit" />
         <text>{{ item.text }}</text>
       </button>
     </view>
-    <view class="desktop-foot"><text>组织 · 协作 · 出发</text><text>让旅程更从容</text></view>
+    <view class="desktop-foot"><text>组织 · 协作 · 复盘</text><text>让每场活动更有序</text></view>
   </view>
   <!-- #endif -->
 </template>

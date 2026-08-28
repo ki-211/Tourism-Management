@@ -1,0 +1,9 @@
+target/
+.local/
+uploads/
+*.log
+.env
+src/main/resources/application-secret.yml
+.git/
+.idea/
+.vscode/

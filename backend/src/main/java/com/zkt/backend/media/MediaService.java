@@ -1,8 +1,11 @@
 package com.zkt.backend.media;
 
 import com.zkt.backend.common.DomainException;
+import com.zkt.backend.auth.JwtService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.UUID;
 
@@ -12,10 +15,12 @@ public class MediaService {
     private final MediaAssetRepository assets;
     private final ObjectStorage storage;
     private final String publicBaseUrl;
+    private final JwtService jwt;
 
-    public MediaService(MediaAssetRepository assets, ObjectStorage storage, StorageProperties properties) {
+    public MediaService(MediaAssetRepository assets, ObjectStorage storage, StorageProperties properties, JwtService jwt) {
         this.assets = assets; this.storage = storage;
         this.publicBaseUrl = properties.publicBaseUrl().replaceAll("/$", "");
+        this.jwt = jwt;
     }
 
     @Transactional
@@ -30,17 +35,41 @@ public class MediaService {
             MediaAsset asset = new MediaAsset(); asset.setOwnerId(ownerId); asset.setObjectKey(key);
             asset.setOriginalName(file.getOriginalFilename() == null ? "image" + type.extension : file.getOriginalFilename());
             asset.setContentType(type.mime); asset.setSizeBytes((long) bytes.length); asset.setPurpose(purpose);
-            try { return assets.save(asset); } catch (Exception e) { storage.delete(key); throw e; }
+            try {
+                MediaAsset saved = assets.save(asset);
+                if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                        @Override public void afterCompletion(int status) {
+                            if (status != TransactionSynchronization.STATUS_COMMITTED) storage.delete(key);
+                        }
+                    });
+                }
+                return saved;
+            } catch (Exception e) { storage.delete(key); throw e; }
         } catch (DomainException e) { throw e; }
         catch (Exception e) { throw new IllegalStateException("图片上传失败", e); }
     }
 
-    public MediaView view(MediaAsset asset) {
-        return new MediaView(asset.getId(), publicBaseUrl + "/api/v1/media/public/" + asset.getObjectKey(), asset.getContentType(), asset.getSizeBytes());
+    public MediaView view(MediaAsset asset, Long viewerId) {
+        String path = "COVER".equals(asset.getPurpose())
+                ? "/api/v1/media/public/" + asset.getId()
+                : "/api/v1/media/access/" + asset.getId() + "?token=" + jwt.createMediaToken(viewerId, asset.getId());
+        return new MediaView(asset.getId(), publicBaseUrl + path, asset.getContentType(), asset.getSizeBytes());
     }
-    public ObjectStorage.StoredObject load(String objectKey) {
-        assets.findByObjectKey(objectKey).orElseThrow(() -> DomainException.notFound("图片不存在"));
-        return storage.get(objectKey);
+    public ObjectStorage.StoredObject load(Long id) {
+        MediaAsset asset = find(id);
+        return storage.get(asset.getObjectKey());
+    }
+    public MediaAsset find(Long id) { return assets.findById(id).orElseThrow(() -> DomainException.notFound("图片不存在")); }
+
+    public void removeAfterCommit(MediaAsset asset) {
+        assets.delete(asset);
+        Runnable deleteObject = () -> storage.delete(asset.getObjectKey());
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override public void afterCommit() { deleteObject.run(); }
+            });
+        } else deleteObject.run();
     }
 
     private Type detect(byte[] b) {

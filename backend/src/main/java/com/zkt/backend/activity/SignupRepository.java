@@ -9,4 +9,5 @@ public interface SignupRepository extends JpaRepository<Signup, Long> {
     Optional<Signup> findByActivityIdAndUserId(Long activityId, Long userId);
     List<Signup> findByActivityIdOrderByJoinedAt(Long activityId);
     void deleteByActivityIdAndUserId(Long activityId, Long userId);
+    void deleteByUserId(Long userId);
 }

@@ -15,12 +15,28 @@ spring:
       hibernate.jdbc.time_zone: Asia/Shanghai
   flyway:
     enabled: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2s
+      repositories:
+        enabled: false
 
 server:
   port: ${SERVER_PORT:8080}
   forward-headers-strategy: framework
 
 app:
+  time-zone: ${APP_TIME_ZONE:Asia/Shanghai}
+  realtime:
+    mode: ${REALTIME_MODE:local}
+    channel: ${REALTIME_CHANNEL:tourism:room-events}
+  rate-limit:
+    enabled: ${RATE_LIMIT_ENABLED:true}
+    auth-per-minute: ${AUTH_RATE_LIMIT:60}
+    upload-per-minute: ${UPLOAD_RATE_LIMIT:60}
   jwt:
     secret: ${JWT_SECRET:}
     access-ttl: PT15M
@@ -40,6 +56,11 @@ app:
   amap-web-key: ${AMAP_WEB_KEY:}
 
 management:
+  health:
+    redis.enabled: ${REDIS_HEALTH_ENABLED:false}
   endpoints.web.exposure.include: health,info
+  endpoint:
+    health:
+      probes.enabled: true
 springdoc:
   swagger-ui.path: /swagger-ui.html

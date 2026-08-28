@@ -9,15 +9,17 @@
     <template v-else>
     <view class="profile-hero">
       <view class="avatar">{{ user?.nickname?.slice(0, 1) || '行' }}</view>
-      <view class="profile-copy"><text class="nickname">{{ user?.nickname || '旅行者' }}</text><text class="account">@{{ user?.username || '--' }}</text></view>
+      <view class="profile-copy"><text class="nickname">{{ user?.nickname || '参与者' }}</text><text class="account">@{{ user?.username || '--' }}</text></view>
       <button class="edit-button" @click="edit">编辑</button>
     </view>
-    <view class="motto"><text class="motto-mark">“</text><text>去见想见的风景，也珍惜一起出发的人。</text></view>
+    <view class="motto"><text class="motto-mark">“</text><text>认真组织每场活动，也珍惜每一次共同参与。</text></view>
     <view class="section-label">我的服务</view>
     <view class="card menu-card">
       <view class="menu-item" @click="history"><view class="menu-icon warm">✓</view><view class="menu-copy"><text class="menu-title">签到记录</text><text class="muted">查看已完成的活动签到</text></view><text class="chevron">›</text></view>
       <view class="divider"></view>
       <view class="menu-item" @click="edit"><view class="menu-icon">✎</view><view class="menu-copy"><text class="menu-title">个人资料</text><text class="muted">修改昵称与个人信息</text></view><text class="chevron">›</text></view>
+      <view class="divider"></view>
+      <view class="menu-item" @click="security"><view class="menu-icon">⌾</view><view class="menu-copy"><text class="menu-title">账号与安全</text><text class="muted">修改密码、退出设备或注销账号</text></view><text class="chevron">›</text></view>
     </view>
     <button class="logout-button" @click="logout">退出当前账号</button>
     </template>
@@ -56,6 +58,7 @@ async function load() {
 onShow(load)
 const edit = () => uni.navigateTo({ url: '/pages/editInfo/editInfo' })
 const history = () => uni.navigateTo({ url: '/pages/signDetail/signDetail' })
+const security = () => uni.navigateTo({ url: '/pages/security/security' })
 async function logout() {
   try { await locationSharing.stop(true); await api('/auth/logout', 'POST', { refreshToken: refreshToken() }) }
   finally { session.clear(); uni.reLaunch({ url: '/pages/login/login' }) }

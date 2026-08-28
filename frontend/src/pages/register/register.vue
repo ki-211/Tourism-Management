@@ -1,6 +1,6 @@
 <template>
   <view class="page">
-    <view class="page-head"><text class="eyebrow">JOIN THE JOURNEY</text><view class="page-title">创建同行账号</view><text class="muted intro">只需简单几步，开始组织你的下一次活动。</text></view>
+    <view class="page-head"><text class="eyebrow">JOIN THE ACTIVITY</text><view class="page-title">创建协作账号</view><text class="muted intro">只需简单几步，开始组织你的下一次活动。</text></view>
     <view class="card form-card">
       <view class="field"><text class="field-label">用户名</text><input v-model="form.username" class="input" placeholder="3-16 位字母、数字或下划线" /></view>
       <view class="field"><text class="field-label">昵称</text><input v-model="form.nickname" class="input" placeholder="大家怎么称呼你" /></view>

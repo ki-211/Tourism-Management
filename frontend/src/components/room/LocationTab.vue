@@ -37,7 +37,7 @@
 
         <view v-if="manual" class="card manual-card">
           <view class="row-between"><view><text class="section-title">选择固定位置</text><text class="muted">适合定位权限不可用时临时标记集合点</text></view><button class="close-button" @click="manual = false">×</button></view>
-          <view class="search-row"><input v-model="keyword" class="input search-input" maxlength="100" placeholder="学校、景点或详细地址" confirm-type="search" @confirm="search" /><button size="mini" :loading="searching" :disabled="searching" @click="search">搜索</button></view>
+          <view class="search-row"><input v-model="keyword" class="input search-input" maxlength="100" placeholder="机构、场馆或详细地址" confirm-type="search" @confirm="search" /><button size="mini" :loading="searching" :disabled="searching" @click="search">搜索</button></view>
           <view v-if="searchMessage" class="search-message">{{ searchMessage }}</view>
           <view v-for="place in places" :key="`${place.latitude}-${place.longitude}`" class="place" @click="choose(place)">
             <view>{{ place.address }}</view><view class="muted">{{ place.latitude }}, {{ place.longitude }}</view>
