@@ -19,10 +19,16 @@ export class ActivitySocket {
     const url = API_BASE.replace(/^http/, 'ws').replace(/\/api\/v1$/, '') + `/ws?ticket=${encodeURIComponent(ticket)}`
     this.socket = uni.connectSocket({ url, complete: () => undefined })
     this.socket.onOpen(() => {
+      const reconnected = this.retries > 0
       this.retries = 0
       if (this.reconnectTimer) clearTimeout(this.reconnectTimer)
       this.reconnectTimer = null
-      this.socket?.send({ data: JSON.stringify({ type: 'SUBSCRIBE_ACTIVITY', activityId: this.activityId }) })
+      this.socket?.send({
+        data: JSON.stringify({ type: 'SUBSCRIBE_ACTIVITY', activityId: this.activityId }),
+        success: () => {
+          if (reconnected) this.listeners.forEach(listener => listener({ type: 'SOCKET_RECONNECTED', activityId: this.activityId }))
+        }
+      })
     })
     this.socket.onMessage(message => {
       try {

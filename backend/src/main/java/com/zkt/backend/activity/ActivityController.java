@@ -40,6 +40,10 @@ public class ActivityController {
     @GetMapping("/{id}/signups") ApiResponse<List<ActivityService.MemberView>> members(@AuthenticationPrincipal UserPrincipal p, @PathVariable Long id) {
         return ApiResponse.ok(service.members(p.id(), id));
     }
+    @DeleteMapping("/{id}/signups/me") ApiResponse<Void> leave(@AuthenticationPrincipal UserPrincipal p, @PathVariable Long id) {
+        service.leave(p.id(), id);
+        return ApiResponse.ok("已退出活动", null);
+    }
     @PostMapping("/{id}/transfer") ApiResponse<ActivityService.ActivityView> transfer(@AuthenticationPrincipal UserPrincipal p,
             @PathVariable Long id, @Valid @RequestBody TransferRequest r) {
         return ApiResponse.ok("活动负责人已转让", service.transfer(p.id(), id, r.newCreatorId()));

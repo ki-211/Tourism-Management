@@ -86,8 +86,9 @@ export const useLocationSharingStore = defineStore('locationSharing', {
       this.startedAt = new Date().toISOString()
       this.status = 'active'
       this.mode = 'fixed'
-      this.message = '当前共享的是固定位置，不会自动跟随移动'
-      uni.setStorageSync(STORAGE_KEY, { activityId, activityEndTime, startedAt: this.startedAt } satisfies PersistedSharing)
+      this.message = '当前共享的是固定位置，仅在本次打开期间持续'
+      // Fixed coordinates must never be restored as live tracking after a relaunch.
+      uni.removeStorageSync(STORAGE_KEY)
       this.scheduleActivityEnd()
       try { await this.handlePosition({ ...coordinates, address }, true) }
       catch (reason: any) { this.fail(reason, '固定位置共享失败，请重试'); throw reason }
@@ -171,7 +172,7 @@ export const useLocationSharingStore = defineStore('locationSharing', {
         this.current = uploaded
         this.lastSent = { ...coordinates, sentAt: Date.now() }
         this.status = 'active'
-        this.message = this.mode === 'fixed' ? '当前共享的是固定位置，不会自动跟随移动' : ''
+        this.message = this.mode === 'fixed' ? '当前共享的是固定位置，仅在本次打开期间持续' : ''
       } catch (reason: any) {
         if (reason?.code === 'ACTIVITY_ENDED') await this.stop(true)
         else if (reason?.statusCode === 403) await this.stop(false)

@@ -35,6 +35,7 @@
         <button v-if="activity.creator" class="secondary-btn" @click="members">参与者名单</button>
         <button v-if="activity.creator" class="secondary-btn" @click="retryCover">{{ activity.coverUrl ? '更新封面' : '补传封面' }}</button>
       </view>
+      <button v-if="!activity.creator" class="leave-btn" :loading="busy" :disabled="busy" @click="leaveActivity">退出活动</button>
     </view>
       </view>
     </view>
@@ -49,11 +50,13 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import { api, upload } from '@/services/api'
 import { displayTime } from '@/utils/time'
 import type { Activity } from '@/services/types'
+import { useLocationSharingStore } from '@/stores/locationSharing'
 const id = ref(0)
 const code = ref('')
 const activity = ref<Activity | null>(null)
 const loading = ref(true)
 const busy = ref(false)
+const locationSharing = useLocationSharingStore()
 const join = reactive<any>({ grade: '', passengerCount: undefined, remark: '', invitationCode: '' })
 onLoad((options: any) => {
   id.value = Number(options.id)
@@ -82,6 +85,25 @@ async function rotate() {
   busy.value = true
   try { activity.value = await api(`/activities/${id.value}/invitation-code/rotate`, 'POST') }
   finally { busy.value = false }
+}
+async function leaveActivity() {
+  if (busy.value) return
+  const confirmed = await new Promise<boolean>(resolve => uni.showModal({
+    title: '退出活动',
+    content: '退出后将无法进入活动空间，当前位置共享也会立即停止。确定退出吗？',
+    confirmText: '确认退出',
+    confirmColor: '#DC4C4C',
+    success: result => resolve(result.confirm),
+    fail: () => resolve(false)
+  }))
+  if (!confirmed) return
+  busy.value = true
+  try {
+    if (locationSharing.activityId === id.value && locationSharing.sharing) await locationSharing.stop(true)
+    await api(`/activities/${id.value}/signups/me`, 'DELETE')
+    uni.showToast({ title: '已退出活动' })
+    setTimeout(() => uni.switchTab({ url: '/pages/home/home' }), 500)
+  } finally { busy.value = false }
 }
 function retryCover() {
   uni.chooseImage({ count: 1, sizeType: ['compressed'], success: async result => {
@@ -117,6 +139,7 @@ const members = () => uni.navigateTo({ url: `/pages/signupList/signupList?id=${i
 .actions { padding-top: 12rpx; }
 .action-grid { display: flex; flex-wrap: wrap; gap: 16rpx; }
 .action-grid .secondary-btn { flex: 1; min-width: 210rpx; margin-top: 0; }
+.leave-btn { width: 100%; height: 76rpx; margin-top: 26rpx; color: $danger; font-size: 25rpx; line-height: 76rpx; background: transparent; border: 1rpx solid rgba(220,76,76,.26); border-radius: 17rpx; }
 /* #ifdef H5 */
 @media (min-width: 900px) {
   .detail-page { max-width: 1280px; padding-top: 32px; }

@@ -8,7 +8,7 @@
 docker compose up -d --build
 ```
 
-生产 JWT 密钥需为至少 32 字节随机值的 Base64。地图需要三类配置：后端 `AMAP_WEB_KEY` 使用高德 Web Service Key；H5 构建参数 `VITE_AMAP_JS_KEY` 使用高德 JS API Key；安全校验二选一配置 `AMAP_H5_SECURITY_JS_CODE` 或 `AMAP_H5_SERVICE_HOST`。构建脚本只在编译期间注入客户端配置并恢复源文件，仓库不得提交真实值。未配置客户端 Key 时 H5 会显示明确提示并保留成员位置列表，不渲染空白地图。
+生产 JWT 密钥需为至少 32 字节随机值的 Base64。地图需要三类配置：后端 `AMAP_WEB_KEY` 使用高德 Web Service Key；H5 构建参数 `VITE_AMAP_JS_KEY` 使用高德 JS API Key；安全校验二选一配置 `AMAP_H5_SECURITY_JS_CODE` 或 `AMAP_H5_SERVICE_HOST`。`npm run dev:h5` 和 H5 构建都会临时注入客户端配置，并在开发服务停止或构建结束后恢复 `manifest.json`；仓库不得提交真实值。未配置客户端 Key 时 H5 会显示明确提示并保留成员位置列表，不渲染空白地图。
 
 ## HTTPS / WSS
 

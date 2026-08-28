@@ -11,9 +11,23 @@ const storage = {
 describe('location sharing lifecycle', () => {
   beforeEach(() => {
     vi.useFakeTimers()
+    vi.clearAllMocks()
     vi.stubGlobal('uni', storage)
     vi.stubGlobal('wx', { offLocationChange: vi.fn(), stopLocationUpdate: vi.fn() })
     setActivePinia(createPinia())
+  })
+
+  it('keeps a fixed shared position session-only so it cannot restart as live tracking', async () => {
+    const store = useLocationSharingStore()
+    const endTime = new Date(Date.now() + 60000).toISOString()
+    vi.spyOn(store, 'handlePosition').mockResolvedValue(undefined)
+
+    await store.startAt(10, endTime, { latitude: 39.9, longitude: 116.4 }, '北京市')
+
+    expect(store.mode).toBe('fixed')
+    expect(store.message).toContain('本次打开期间')
+    expect(storage.removeStorageSync).toHaveBeenCalledWith('tourism.locationSharing.v1')
+    expect(storage.setStorageSync).not.toHaveBeenCalled()
   })
 
   it('ignores a duplicate start for the same active activity', async () => {

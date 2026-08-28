@@ -6,6 +6,7 @@ import com.zkt.backend.common.DomainException;
 import com.zkt.backend.media.MediaAsset;
 import com.zkt.backend.media.MediaAssetRepository;
 import com.zkt.backend.media.MediaService;
+import com.zkt.backend.location.SharedLocationRepository;
 import com.zkt.backend.room.RoomEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,11 +26,14 @@ public class ActivityService {
     private final MediaAssetRepository assets;
     private final MediaService media;
     private final RoomEventPublisher events;
+    private final SharedLocationRepository locations;
     private final SecureRandom random = new SecureRandom();
 
     public ActivityService(ActivityRepository activities, SignupRepository signups, UserRepository users,
-                           MediaAssetRepository assets, MediaService media, RoomEventPublisher events) {
+                           MediaAssetRepository assets, MediaService media, RoomEventPublisher events,
+                           SharedLocationRepository locations) {
         this.activities = activities; this.signups = signups; this.users = users; this.assets = assets; this.media = media; this.events = events;
+        this.locations = locations;
     }
 
     @Transactional
@@ -59,6 +63,20 @@ public class ActivityService {
         Signup s = new Signup(); s.setActivityId(activityId); s.setUserId(userId); s.setGrade(c.grade());
         s.setPassengerCount(c.passengerCount()); s.setRemark(c.remark()); signups.save(s);
         return view(a, userId);
+    }
+
+    @Transactional
+    public void leave(Long userId, Long activityId) {
+        Activity a = find(activityId);
+        if (a.getCreatorId().equals(userId))
+            throw DomainException.conflict("CREATOR_MUST_TRANSFER", "活动负责人需先转让负责人，才能退出活动");
+        if (!signups.existsByActivityIdAndUserId(activityId, userId))
+            throw DomainException.badRequest("NOT_MEMBER", "尚未加入该活动");
+        locations.deleteByActivityIdAndUserId(activityId, userId);
+        signups.deleteByActivityIdAndUserId(activityId, userId);
+        MemberLeft payload = new MemberLeft(userId);
+        events.publish(activityId, "LOCATION_REMOVED", payload);
+        events.publish(activityId, "MEMBER_LEFT", payload);
     }
 
     @Transactional
@@ -163,4 +181,5 @@ public class ActivityService {
     public record InvitationPreview(Long id, String title, String location, LocalDateTime startTime, LocalDateTime endTime, LocalDateTime signupEnd) {}
     public record MemberView(Long userId, String username, String nickname, String grade, Integer passengerCount, String remark, LocalDateTime joinedAt) {}
     public record CreatorTransfer(Long previousCreatorId, Long newCreatorId) {}
+    public record MemberLeft(Long userId) {}
 }

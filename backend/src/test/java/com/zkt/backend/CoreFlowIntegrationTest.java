@@ -115,8 +115,19 @@ class CoreFlowIntegrationTest {
         mvc.perform(put("/api/v1/activities/{id}/locations/me", activityId).header("Authorization", bearer(outsiderToken))
                         .contentType(MediaType.APPLICATION_JSON).content(json(Map.of("latitude", 39.9, "longitude", 116.4))))
                 .andExpect(status().isForbidden());
-        mvc.perform(delete("/api/v1/activities/{id}/locations/me", activityId).header("Authorization", bearer(memberToken)))
+        JsonNode creatorLeave = body(mvc.perform(delete("/api/v1/activities/{id}/signups/me", activityId)
+                        .header("Authorization", bearer(ownerToken)))
+                .andExpect(status().isConflict()).andReturn());
+        assertThat(creatorLeave.path("code").asText()).isEqualTo("CREATOR_MUST_TRANSFER");
+
+        mvc.perform(delete("/api/v1/activities/{id}/signups/me", activityId).header("Authorization", bearer(memberToken)))
                 .andExpect(status().isOk());
+        JsonNode afterLeave = body(mvc.perform(get("/api/v1/activities/{id}/locations", activityId)
+                        .header("Authorization", bearer(ownerToken)))
+                .andExpect(status().isOk()).andReturn());
+        assertThat(afterLeave.path("data").size()).isEqualTo(1);
+        mvc.perform(get("/api/v1/activities/{id}/locations", activityId).header("Authorization", bearer(memberToken)))
+                .andExpect(status().isForbidden());
 
         SharedLocation ownerLocation = sharedLocations.findByActivityIdAndUserId(activityId, ownerId).orElseThrow();
         ownerLocation.setExpiresAt(LocalDateTime.now().minusSeconds(1));
