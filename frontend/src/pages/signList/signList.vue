@@ -2,7 +2,7 @@
   <view class="page with-desktop-nav">
     <DesktopNav active="sign" />
     <view class="page-head row-between">
-      <view><text class="eyebrow">CHECK IN</text><view class="page-title">待签到</view><text class="muted">别错过正在进行的签到任务</text></view>
+      <view><text class="eyebrow">签到任务</text><view class="page-title">待签到</view><text class="muted">别错过正在进行的签到任务</text></view>
       <button class="ghost-btn" @click="history">签到记录</button>
     </view>
     <view v-if="loading" class="loading-stack"><view v-for="item in 3" :key="item" class="skeleton-card"></view></view>

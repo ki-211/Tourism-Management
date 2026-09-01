@@ -1,6 +1,6 @@
 <template>
   <view class="page security-page">
-    <view class="page-head"><text class="eyebrow">ACCOUNT SECURITY</text><view class="page-title">账号与安全</view><text class="muted">密码修改后会立即退出所有已登录设备。</text></view>
+    <view class="page-head"><text class="eyebrow">账号安全</text><view class="page-title">账号与安全</view><text class="muted">密码修改后会立即退出所有已登录设备。</text></view>
     <view class="card form-card">
       <view class="section-title">修改密码</view>
       <view class="field"><text class="field-label">当前密码</text><input v-model="password.current" class="input" password maxlength="64" placeholder="请输入当前密码" /></view>

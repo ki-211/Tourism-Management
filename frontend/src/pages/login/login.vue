@@ -2,7 +2,7 @@
   <view class="page auth">
     <view class="brand-block">
       <view class="logo-mark"><text>行</text></view>
-      <text class="eyebrow">ACTIVITY HUB</text>
+      <text class="eyebrow">活动协作</text>
       <view class="brand">协作集</view>
       <text class="slogan">让每一场活动，都有人协作、有序完成</text>
     </view>

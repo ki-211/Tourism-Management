@@ -1,7 +1,7 @@
 <template>
   <view class="page with-desktop-nav">
     <DesktopNav active="journey" />
-    <view class="page-head"><text class="eyebrow">MY JOURNEYS</text><view class="page-title">我的活动</view></view>
+    <view class="page-head"><text class="eyebrow">行程</text><view class="page-title">我的活动</view><text class="muted">查看你参与和负责的活动</text></view>
     <view class="tabs">
       <button :class="{ active: scope === 'joined' }" @click="change('joined')"><text>我参与的</text></button>
       <button :class="{ active: scope === 'created' }" @click="change('created')"><text>我负责的</text></button>

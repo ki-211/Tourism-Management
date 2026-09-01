@@ -1,6 +1,6 @@
 <template>
   <view class="page">
-    <view class="page-head"><text class="eyebrow">TRAVEL MEMBERS</text><view class="page-title">参与者名单</view><text class="muted">{{ loading ? '正在加载成员…' : `共 ${members.length} 位参与者` }}</text></view>
+    <view class="page-head"><text class="eyebrow">参与成员</text><view class="page-title">参与者名单</view><text class="muted">{{ loading ? '正在加载成员…' : `共 ${members.length} 位参与者` }}</text></view>
     <view v-if="loading" class="loading-stack"><view v-for="item in 3" :key="item" class="skeleton-card"></view></view>
     <LoadError v-else-if="error" :message="error" @retry="load" />
     <view v-for="member in members" v-else :key="member.userId" class="card member-card">
@@ -12,7 +12,9 @@
         <view><text class="detail-label">随行人数</text><text class="detail-value">{{ member.passengerCount ?? '未填写' }}</text></view>
         <view><text class="detail-label">备注</text><text class="detail-value">{{ member.remark || '无' }}</text></view>
       </view>
-      <button class="transfer-btn" :disabled="transferring" @click="transfer(member.userId)">转让负责人</button>
+      <view v-if="canTransfer(member.userId)" class="transfer-row">
+        <button class="transfer-btn" :disabled="transferring" @click="transfer(member.userId)">转让给此人</button>
+      </view>
     </view>
     <view v-if="!loading && !error && !members.length" class="empty">暂无参与者</view>
   </view>
@@ -22,12 +24,15 @@ import { ref } from 'vue'
 import { onLoad, onPullDownRefresh, onShow } from '@dcloudio/uni-app'
 import LoadError from '@/components/LoadError.vue'
 import { api } from '@/services/api'
+import { currentUser } from '@/services/session'
 import type { Member } from '@/services/types'
 const id = ref(0)
 const members = ref<Member[]>([])
 const loading = ref(false)
 const transferring = ref(false)
 const error = ref('')
+const me = currentUser()
+const canTransfer = (userId: number) => me?.id !== userId
 onLoad((options: any) => { id.value = Number(options.id) })
 onShow(load)
 async function load() {
@@ -53,5 +58,5 @@ function transfer(userId: number) {
 }
 </script>
 <style scoped lang="scss">
-.member-main{display:flex;align-items:center;min-width:0;gap:18rpx}.member-avatar{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:74rpx;height:74rpx;color:#fff;font-size:29rpx;font-weight:800;background:linear-gradient(145deg,$primary,#47aaa0);border-radius:24rpx 24rpx 24rpx 8rpx}.member-copy{flex:1;min-width:0}.member-copy .section-title{margin-bottom:3rpx}.member-details{display:flex;margin-top:22rpx;padding:20rpx;background:#f7faf9;border-radius:18rpx;gap:24rpx}.member-details>view{flex:1;min-width:0}.detail-label,.detail-value{display:block}.detail-label{margin-bottom:5rpx;color:$text-muted;font-size:22rpx}.detail-value{color:$text-secondary;font-size:25rpx;line-height:1.5;word-break:break-word}.transfer-btn{width:100%;height:70rpx;margin-top:20rpx;color:$primary;font-size:24rpx;line-height:70rpx;background:$primary-soft;border-radius:15rpx}
+.member-main{display:flex;align-items:center;min-width:0;gap:18rpx}.member-avatar{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:74rpx;height:74rpx;color:#fff;font-size:29rpx;font-weight:800;background:linear-gradient(145deg,$primary,#47aaa0);border-radius:24rpx 24rpx 24rpx 8rpx}.member-copy{flex:1;min-width:0}.member-copy .section-title{margin-bottom:3rpx}.member-details{display:flex;margin-top:22rpx;padding:20rpx;background:#f7faf9;border-radius:18rpx;gap:24rpx}.member-details>view{flex:1;min-width:0}.detail-label,.detail-value{display:block}.detail-label{margin-bottom:5rpx;color:$text-muted;font-size:22rpx}.detail-value{color:$text-secondary;font-size:25rpx;line-height:1.5;word-break:break-word}.transfer-row{display:flex;justify-content:flex-end;margin-top:12rpx}.transfer-btn{height:56rpx;margin:0;padding:0 8rpx;color:$text-muted;font-size:22rpx;line-height:56rpx;background:transparent}
 </style>

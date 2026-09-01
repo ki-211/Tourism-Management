@@ -1,6 +1,6 @@
 <template>
   <view class="page">
-    <view class="page-head"><text class="eyebrow">TRAVEL INFO</text><view class="page-title">发布车辆</view><text class="muted">补充司机、时间和上车点，方便大家准时集合。</text></view>
+    <view class="page-head"><text class="eyebrow">出行安排</text><view class="page-title">发布车辆</view><text class="muted">补充司机、时间和上车点，方便大家准时集合。</text></view>
     <view class="card form-card">
       <view class="field"><text class="field-label">车牌号</text><input v-model="form.plateNumber" class="input" maxlength="20" placeholder="请输入车牌号" /></view>
       <view class="field"><text class="field-label">司机姓名</text><input v-model="form.driverName" class="input" maxlength="30" placeholder="请输入司机姓名" /></view>

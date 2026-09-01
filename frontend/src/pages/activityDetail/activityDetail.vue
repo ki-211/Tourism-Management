@@ -6,11 +6,12 @@
       <image v-if="activity.coverUrl" class="hero" :src="activity.coverUrl" mode="aspectFill" />
       <view v-else class="hero hero-empty"><text class="hero-mark">行</text><text>一起去更远的地方</text></view>
       <text class="hero-tag">{{ activity.visibility === 'PUBLIC' ? '公开活动' : '邀请制活动' }}</text>
+      <text class="life-tag" :class="life">{{ lifeLabel }}</text>
     </view>
     <view class="card overview">
       <view class="row-between heading"><view class="page-title">{{ activity.title }}</view><text v-if="activity.joined" class="tag">{{ activity.creator ? '我负责' : '已参与' }}</text></view>
       <view class="info-line"><text class="info-icon">⌖</text><text class="info-value">{{ activity.location }}</text></view>
-      <view class="info-line"><text class="info-icon">◷</text><text class="info-value">{{ displayTime(activity.startTime) }} - {{ displayTime(activity.endTime) }}</text></view>
+      <view class="info-line"><text class="info-icon">◷</text><text class="info-value">{{ timeText }}</text></view>
       <view class="info-line"><text class="info-icon">◇</text><text class="info-value">由 {{ activity.creatorName }} 发起</text></view>
       <view v-if="activity.feeRule" class="notice"><text class="notice-label">费用说明</text><text>{{ activity.feeRule }}</text></view>
       <view class="description-block"><text class="section-title">活动介绍</text><text class="body-text">{{ activity.description || '发起人暂未填写活动说明。' }}</text></view>
@@ -45,10 +46,11 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
+import { useCurrentTime } from '@/composables/useCurrentTime'
 import { api, upload } from '@/services/api'
-import { displayTime } from '@/utils/time'
+import { activityLife, activityLifeLabel, displayTimeRange } from '@/utils/time'
 import type { Activity } from '@/services/types'
 import { useLocationSharingStore } from '@/stores/locationSharing'
 const id = ref(0)
@@ -58,6 +60,10 @@ const loading = ref(true)
 const busy = ref(false)
 const locationSharing = useLocationSharingStore()
 const join = reactive<any>({ grade: '', passengerCount: undefined, remark: '', invitationCode: '' })
+const now = useCurrentTime()
+const life = computed(() => activity.value ? activityLife(activity.value, now.value) : 'upcoming')
+const lifeLabel = computed(() => activityLifeLabel[life.value])
+const timeText = computed(() => activity.value ? displayTimeRange(activity.value.startTime, activity.value.endTime, now.value) : '')
 onLoad((options: any) => {
   id.value = Number(options.id)
   code.value = options.code || ''
@@ -123,7 +129,13 @@ const members = () => uni.navigateTo({ url: `/pages/signupList/signupList?id=${i
 .hero { display: flex; width: 100%; height: 100%; }
 .hero-empty { align-items: center; justify-content: center; flex-direction: column; color: rgba(255,255,255,.85); font-size: 25rpx; background: linear-gradient(145deg, #0b5f59, #55ada3); gap: 10rpx; }
 .hero-mark { display: flex; align-items: center; justify-content: center; width: 82rpx; height: 82rpx; color: $primary; font-size: 38rpx; font-weight: 800; background: rgba(255,255,255,.92); border-radius: 50%; }
-.hero-tag { position: absolute; right: 26rpx; bottom: 24rpx; padding: 10rpx 18rpx; color: #fff; font-size: 22rpx; font-weight: 650; line-height: 1.3; white-space: nowrap; background: rgba(19,44,40,.66); border-radius: 999rpx; }
+.hero-tag, .life-tag { position: absolute; bottom: 24rpx; padding: 10rpx 18rpx; color: #fff; font-size: 22rpx; font-weight: 650; line-height: 1.3; white-space: nowrap; border-radius: 999rpx; }
+.hero-tag { right: 26rpx; background: rgba(19,44,40,.66); }
+.life-tag { left: 26rpx; background: rgba(19,44,40,.66); }
+.life-tag.signup { background: $primary; }
+.life-tag.ongoing { background: $success; }
+.life-tag.closed { background: $warning; }
+.life-tag.ended { background: rgba(23, 35, 33, .45); }
 .overview { overflow: visible; }
 .heading { align-items: flex-start; margin-bottom: 22rpx; }
 .notice { display: flex; align-items: flex-start; margin-top: 24rpx; padding: 20rpx; color: $text-secondary; font-size: 25rpx; line-height: 1.6; background: $accent-soft; border-radius: 18rpx; gap: 18rpx; }

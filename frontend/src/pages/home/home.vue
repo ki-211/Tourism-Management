@@ -3,7 +3,7 @@
     <DesktopNav active="home" />
     <view class="hero-head">
       <view class="hero-copy">
-        <text class="eyebrow">EXPLORE TOGETHER</text>
+        <text class="eyebrow">一起出发</text>
         <view class="page-title">发现下一场活动</view>
         <text class="hero-sub">从报名到结束，把每一次协作安排得清晰有序。</text>
       </view>

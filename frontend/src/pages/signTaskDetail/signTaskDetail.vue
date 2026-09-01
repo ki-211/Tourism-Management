@@ -2,7 +2,7 @@
   <view class="page">
     <view v-if="loading" class="loading-stack"><view class="skeleton-card"></view><view v-for="item in 3" :key="item" class="skeleton-card member-skeleton"></view></view>
     <template v-else-if="summary">
-      <view class="page-head"><text class="eyebrow">CHECK-IN SUMMARY</text><view class="page-title">{{ summary.task.title }}</view><text class="muted">{{ summary.task.description || '签到完成情况' }}</text></view>
+      <view class="page-head"><text class="eyebrow">签到统计</text><view class="page-title">{{ summary.task.title }}</view><text class="muted">{{ summary.task.description || '签到完成情况' }}</text></view>
       <view class="summary-bar">
         <view><text class="summary-number">{{ signedCount }}</text><text class="summary-label">已签到</text></view>
         <view><text class="summary-number">{{ summary.members.length - signedCount }}</text><text class="summary-label">未签到</text></view>

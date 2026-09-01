@@ -1,7 +1,7 @@
 <template>
   <view class="page">
     <view class="page-head row-between">
-      <view><text class="eyebrow">TRANSPORT</text><view class="page-title">车辆信息</view><text class="muted">提前确认车辆和集合安排</text></view>
+      <view><text class="eyebrow">出行车辆</text><view class="page-title">车辆信息</view><text class="muted">提前确认车辆和集合安排</text></view>
       <button v-if="creator" class="mini-primary" @click="add">＋ 发布</button>
     </view>
     <view v-if="loading" class="loading-stack"><view v-for="item in 2" :key="item" class="skeleton-card"></view></view>

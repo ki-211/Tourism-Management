@@ -5,7 +5,7 @@
     <template v-else>
       <view v-if="task" class="checkin-hero">
         <view class="check-mark">✓</view>
-        <view><text class="eyebrow">READY TO CHECK IN</text><view class="page-title">{{ task.title }}</view><text class="hero-desc">{{ task.description || '完成本次活动签到' }}</text></view>
+        <view><text class="eyebrow">现在签到</text><view class="page-title">{{ task.title }}</view><text class="hero-desc">{{ task.description || '完成本次活动签到' }}</text></view>
       </view>
       <view class="card form-card">
         <view class="section-title">签到信息</view>

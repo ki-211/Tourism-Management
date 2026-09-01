@@ -4,6 +4,7 @@ import com.zkt.backend.common.DomainException;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
@@ -17,7 +18,8 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 class GeocodingServiceTest {
     @Test void missingKeyReturnsConfigurationError() {
-        GeocodingService service = new GeocodingService(RestClient.create(), "");
+        RestClient client = RestClient.builder().requestFactory(new SimpleClientHttpRequestFactory()).build();
+        GeocodingService service = new GeocodingService(client, "");
         assertThatThrownBy(() -> service.search("北京站", null))
                 .isInstanceOfSatisfying(DomainException.class, error -> {
                     assertThat(error.getCode()).isEqualTo("GEOCODING_NOT_CONFIGURED");

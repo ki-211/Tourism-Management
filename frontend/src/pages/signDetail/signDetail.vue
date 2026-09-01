@@ -1,6 +1,6 @@
 <template>
   <view class="page">
-    <view class="page-head"><text class="eyebrow">CHECK-IN HISTORY</text><view class="page-title">签到记录</view><text class="muted">每一次准时抵达，都值得被记录。</text></view>
+    <view class="page-head"><text class="eyebrow">历史记录</text><view class="page-title">签到记录</view><text class="muted">每一次准时抵达，都值得被记录。</text></view>
     <view v-if="loading" class="loading-stack"><view v-for="item in 3" :key="item" class="skeleton-card"></view></view>
     <LoadError v-else-if="error" :message="error" @retry="load" />
     <view v-for="record in records" v-else :key="record.recordId" class="card record-card">
