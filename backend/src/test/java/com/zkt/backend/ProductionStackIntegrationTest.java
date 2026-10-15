@@ -1,6 +1,9 @@
 package com.zkt.backend;
 
+import com.zkt.backend.media.ObjectStorage;
+import com.zkt.backend.media.S3ObjectStorage;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -11,6 +14,9 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ActiveProfiles("prod")
@@ -20,10 +26,10 @@ class ProductionStackIntegrationTest {
     @Container
     static final MySQLContainer<?> mysql = new MySQLContainer<>(DockerImageName.parse("mysql:8.4"))
             .withDatabaseName("tourism").withUsername("tourism").withPassword("tourism-test-password");
+    // minio/minio was removed from Docker Hub; s3mock speaks the same S3 API that S3ObjectStorage uses.
     @Container
-    static final GenericContainer<?> minio = new GenericContainer<>(DockerImageName.parse("minio/minio:RELEASE.2025-07-23T15-54-02Z"))
-            .withEnv("MINIO_ROOT_USER", "tourism-test").withEnv("MINIO_ROOT_PASSWORD", "tourism-test-secret")
-            .withCommand("server", "/data").withExposedPorts(9000);
+    static final GenericContainer<?> s3 = new GenericContainer<>(DockerImageName.parse("adobe/s3mock:5.2.2"))
+            .withExposedPorts(9090);
     @Container
     static final GenericContainer<?> redis = new GenericContainer<>(DockerImageName.parse("redis:8.2-alpine"))
             .withCommand("redis-server", "--requirepass", "tourism-redis-test").withExposedPorts(6379);
@@ -39,7 +45,7 @@ class ProductionStackIntegrationTest {
         registry.add("app.jwt.secret", () -> "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=");
         registry.add("app.cors.allowed-origins", () -> "https://localhost");
         registry.add("app.storage.type", () -> "s3");
-        registry.add("app.storage.s3-endpoint", () -> "http://" + minio.getHost() + ':' + minio.getMappedPort(9000));
+        registry.add("app.storage.s3-endpoint", () -> "http://" + s3.getHost() + ':' + s3.getMappedPort(9090));
         registry.add("app.storage.s3-bucket", () -> "tourism-test");
         registry.add("app.storage.s3-access-key", () -> "tourism-test");
         registry.add("app.storage.s3-secret-key", () -> "tourism-test-secret");
@@ -48,10 +54,17 @@ class ProductionStackIntegrationTest {
         registry.add("app.amap-web-key", () -> "test-amap-key");
     }
 
+    @Autowired ObjectStorage storage;
+
     @Test
-    void productionDependenciesAreReady() {
+    void productionDependenciesAreReady() throws Exception {
         assertThat(mysql.isRunning()).isTrue();
-        assertThat(minio.isRunning()).isTrue();
+        assertThat(s3.isRunning()).isTrue();
         assertThat(redis.isRunning()).isTrue();
+        assertThat(storage).isInstanceOf(S3ObjectStorage.class);
+        byte[] content = "tourism".getBytes(StandardCharsets.UTF_8);
+        storage.put("smoke/object.txt", content, "text/plain");
+        try (InputStream in = storage.open("smoke/object.txt")) { assertThat(in.readAllBytes()).isEqualTo(content); }
+        storage.delete("smoke/object.txt");
     }
 }
