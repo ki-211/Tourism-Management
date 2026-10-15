@@ -19,7 +19,10 @@
 
 要求：JDK 21 或更高版本、Node.js 24。后端不要求本机安装 Maven。
 
-后端默认启用 `local` 环境，连接本机 MySQL 的 `localhost:3306/tourism`，连接配置位于 `backend/src/main/resources/application-local.yml`。启动前设置数据库账号和密码：
+后端默认启用 `local` 环境，连接本机 MySQL 的 `localhost:3306/tourism`（库不存在时自动创建）。仓库里的 [`application-local.yml`](backend/src/main/resources/application-local.yml) 只有占位符，账号密码二选一提供：
+
+- **环境变量**：`DB_USERNAME`、`DB_PASSWORD`（可选 `DB_HOST`、`DB_PORT`、`DB_NAME`，或整串 `DB_URL`）
+- **个人配置文件**：复制 `backend/src/main/resources/application-secret.yml.example` 为同目录的 `application-secret.yml` 后填写。该文件已被 Git 和 Docker 构建忽略，只在 `local` 环境加载
 
 ```powershell
 cd backend
@@ -28,15 +31,17 @@ $env:DB_PASSWORD = '你的MySQL密码'
 .\mvnw.cmd spring-boot:run
 ```
 
-使用 IDEA 启动时，在 `BackendApplication` 运行配置的环境变量中设置 `DB_USERNAME` 和 `DB_PASSWORD` 即可；默认环境仍为 `local`。
+使用 IDEA 启动时，在 `BackendApplication` 运行配置里设置上述环境变量，或直接使用 `application-secret.yml`。
 
-如需使用原来的 H2 文件数据库，将活动环境设为 `h2`（配置位于 `application-h2.yml`），或在 `backend` 目录执行：
+不想装 MySQL 时可以切到 H2 文件数据库（[`application-h2.yml`](backend/src/main/resources/application-h2.yml)，零依赖）：
 
 ```powershell
 .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=h2"
 ```
 
-H2 数据文件保存在启动工作目录下的 `.local/tourism.mv.db`；从 `backend` 目录启动时为 `backend/.local/tourism.mv.db`，从项目根目录启动时为 `.local/tourism.mv.db`。上传目录同样相对于启动工作目录。切换数据库不会自动迁移已有数据。Swagger 地址为 <http://localhost:8080/swagger-ui.html>。
+H2 数据保存在启动工作目录下的 `.local/tourism.mv.db`，上传文件在 `.local/uploads`；切换数据库不会迁移已有数据。Swagger 地址为 <http://localhost:8080/swagger-ui.html>。
+
+> **从旧版本升级前先备份**：如果你本机有一个被忽略的 `application-local.yml`（里面写着真实账号密码），`git pull` 会**不提示地**用仓库里的占位符版本覆盖它。拉取前先把账号密码挪到 `application-secret.yml` 或环境变量。完整步骤、配置优先级和常见报错见 [本地开发环境](docs/local-development.md)。
 
 另开终端：
 
@@ -67,6 +72,7 @@ npm run build:mp-weixin
 - [API](docs/api.md)
 - [部署](docs/deployment.md)
 - [测试](docs/testing.md)
+- [本地开发环境](docs/local-development.md)
 
 ## 仓库约定
 

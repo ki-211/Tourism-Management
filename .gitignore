@@ -7,6 +7,7 @@
 # Java
 backend/target/
 backend/.local/
+.local/
 backend/uploads/
 
 # Node / uni-app
@@ -18,10 +19,8 @@ frontend/.env.*.local
 
 # Runtime secrets
 .env
-backend/src/main/resources/application-local.yml
 backend/src/main/resources/application-secret.yml
 
 # Logs
 *.log
 npm-debug.log*
-/backend/src/main/resources/application-h2.yml
