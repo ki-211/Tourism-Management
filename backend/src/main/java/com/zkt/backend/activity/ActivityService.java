@@ -9,6 +9,7 @@ import com.zkt.backend.media.MediaService;
 import com.zkt.backend.location.SharedLocationRepository;
 import com.zkt.backend.room.RoomEventPublisher;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +17,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class ActivityService {
@@ -137,14 +140,16 @@ public class ActivityService {
             case "open" -> activities.findOpen(ActivityVisibility.PUBLIC, LocalDateTime.now(clock), pr);
             default -> activities.findByVisibilityOrderByCreatedAtDesc(ActivityVisibility.PUBLIC, pr);
         };
-        return result.map(a -> view(a, userId));
+        return new PageImpl<>(views(result.getContent(), userId), result.getPageable(), result.getTotalElements());
     }
 
     @Transactional(readOnly = true)
     public List<MemberView> members(Long actorId, Long activityId) {
         creatorActivity(actorId, activityId);
-        return signups.findByActivityIdOrderByJoinedAt(activityId).stream().map(s -> {
-            User u = users.findById(s.getUserId()).orElseThrow();
+        List<Signup> members = signups.findByActivityIdOrderByJoinedAt(activityId);
+        Map<Long, User> byId = usersById(members.stream().map(Signup::getUserId).toList());
+        return members.stream().map(s -> {
+            User u = byId.get(s.getUserId());
             return new MemberView(u.getId(), u.getUsername(), u.getNickname(), s.getGrade(), s.getPassengerCount(), s.getRemark(), s.getJoinedAt());
         }).toList();
     }
@@ -156,13 +161,30 @@ public class ActivityService {
         Activity a = find(id); if (!a.getCreatorId().equals(userId)) throw DomainException.forbidden("只有活动负责人可以执行该操作"); return a;
     }
 
-    private ActivityView view(Activity a, Long viewerId) {
-        User creator = users.findById(a.getCreatorId()).orElseThrow();
-        String cover = a.getCoverMediaId() == null ? null : assets.findById(a.getCoverMediaId()).map(asset -> media.view(asset, viewerId)).map(MediaService.MediaView::url).orElse(null);
-        boolean creatorView = a.getCreatorId().equals(viewerId);
-        return new ActivityView(a.getId(), a.getTitle(), a.getDescription(), a.getLocation(), a.getStartTime(), a.getEndTime(),
-                a.getSignupStart(), a.getSignupEnd(), a.getVisibility(), creatorView ? a.getInvitationCode() : null,
-                a.getFeeRule(), a.getCreatorId(), creator.getNickname(), cover, isMember(a.getId(), viewerId), creatorView, a.getCreatedAt());
+    private ActivityView view(Activity a, Long viewerId) { return views(List.of(a), viewerId).get(0); }
+
+    /** Builds views with one query each for creators, covers and the viewer's memberships, regardless of page size. */
+    private List<ActivityView> views(List<Activity> list, Long viewerId) {
+        if (list.isEmpty()) return List.of();
+        Map<Long, User> creators = usersById(list.stream().map(Activity::getCreatorId).toList());
+        List<Long> coverIds = list.stream().map(Activity::getCoverMediaId).filter(Objects::nonNull).distinct().toList();
+        Map<Long, MediaAsset> covers = coverIds.isEmpty() ? Map.of()
+                : assets.findAllById(coverIds).stream().collect(Collectors.toMap(MediaAsset::getId, Function.identity()));
+        Set<Long> joined = new HashSet<>(signups.findJoinedActivityIds(viewerId, list.stream().map(Activity::getId).toList()));
+        return list.stream().map(a -> {
+            MediaAsset coverAsset = a.getCoverMediaId() == null ? null : covers.get(a.getCoverMediaId());
+            String cover = coverAsset == null ? null : media.view(coverAsset, viewerId).url();
+            boolean creatorView = a.getCreatorId().equals(viewerId);
+            return new ActivityView(a.getId(), a.getTitle(), a.getDescription(), a.getLocation(), a.getStartTime(), a.getEndTime(),
+                    a.getSignupStart(), a.getSignupEnd(), a.getVisibility(), creatorView ? a.getInvitationCode() : null,
+                    a.getFeeRule(), a.getCreatorId(), creators.get(a.getCreatorId()).getNickname(), cover,
+                    joined.contains(a.getId()), creatorView, a.getCreatedAt());
+        }).toList();
+    }
+
+    private Map<Long, User> usersById(Collection<Long> ids) {
+        if (ids.isEmpty()) return Map.of();
+        return users.findAllById(new HashSet<>(ids)).stream().collect(Collectors.toMap(User::getId, Function.identity()));
     }
 
     private String uniqueCode() {

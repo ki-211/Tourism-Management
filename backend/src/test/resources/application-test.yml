@@ -7,6 +7,8 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate.ddl-auto: validate
+    # Lets QueryCountIntegrationTest assert that list endpoints issue a constant number of statements.
+    properties.hibernate.generate_statistics: true
   flyway:
     clean-disabled: false
   h2.console.enabled: false
@@ -23,3 +25,4 @@ app:
 springdoc:
   api-docs.enabled: false
   swagger-ui.enabled: false
+logging.level.org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: WARN

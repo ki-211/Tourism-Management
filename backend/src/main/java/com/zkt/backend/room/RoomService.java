@@ -19,7 +19,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -44,23 +46,23 @@ public class RoomService {
         List<ChatMessage> found = afterId > 0
                 ? messages.findByActivityIdAndIdGreaterThanOrderByIdAsc(activityId, afterId, page)
                 : messages.findByActivityIdAndIdLessThanOrderByIdDesc(activityId, beforeId == null ? Long.MAX_VALUE : beforeId, page).reversed();
-        return found.stream().map(this::messageView).toList();
+        return messageViews(found);
     }
     @Transactional
     public MessageView send(Long userId, Long activityId, String content) {
         activities.requireMember(activityId, userId);
         ChatMessage m = new ChatMessage(); m.setActivityId(activityId); m.setUserId(userId); m.setContent(content.trim());
-        MessageView view = messageView(messages.save(m)); events.publish(activityId, "CHAT_CREATED", view); return view;
+        MessageView view = messageViews(List.of(messages.save(m))).get(0); events.publish(activityId, "CHAT_CREATED", view); return view;
     }
     @Transactional(readOnly = true)
     public List<PhotoView> photos(Long userId, Long activityId) {
-        activities.requireMember(activityId, userId); return photos.findByActivityIdOrderByCreatedAtDesc(activityId).stream().map(photo -> photoView(photo, userId)).toList();
+        activities.requireMember(activityId, userId); return photoViews(photos.findByActivityIdOrderByCreatedAtDesc(activityId), userId, activities.find(activityId));
     }
     @Transactional
     public PhotoView uploadPhoto(Long userId, Long activityId, MultipartFile file) {
         activities.requireMember(activityId, userId); MediaAsset asset = media.saveImage(userId, "ALBUM", file);
         ActivityPhoto p = new ActivityPhoto(); p.setActivityId(activityId); p.setUploaderId(userId); p.setMediaId(asset.getId());
-        PhotoView view = photoView(photos.save(p), userId); events.publish(activityId, "PHOTO_ADDED", new PhotoAdded(view.id())); return view;
+        PhotoView view = photoViews(List.of(photos.save(p)), userId, activities.find(activityId)).get(0); events.publish(activityId, "PHOTO_ADDED", new PhotoAdded(view.id())); return view;
     }
     @Transactional
     public void deletePhoto(Long userId, Long activityId, Long photoId) {
@@ -80,7 +82,7 @@ public class RoomService {
         activities.requireMember(activityId, userId);
         Activity activity = activities.find(activityId);
         if (!now().isBefore(activity.getEndTime())) return List.of();
-        return locations.findByActivityIdAndExpiresAtAfterOrderByUpdatedAtDesc(activityId, now()).stream().map(this::locationView).toList();
+        return locationViews(locations.findByActivityIdAndExpiresAtAfterOrderByUpdatedAtDesc(activityId, now()));
     }
     @Transactional
     public LocationView updateLocation(Long userId, Long activityId, BigDecimal lat, BigDecimal lon, String address) {
@@ -92,7 +94,7 @@ public class RoomService {
                 throw DomainException.conflict("ACTIVITY_ENDED", "活动已结束，位置共享已停止");
             SharedLocation l = locations.findByActivityIdAndUserId(activityId,userId).orElseGet(SharedLocation::new);
             l.setActivityId(activityId); l.setUserId(userId); l.setLatitude(lat); l.setLongitude(lon); l.setAddress(address);
-            l.setExpiresAt(now().plusSeconds(90)); LocationView view=locationView(locations.save(l));
+            l.setExpiresAt(now().plusSeconds(90)); LocationView view=locationViews(List.of(locations.save(l))).get(0);
             events.publish(activityId,"LOCATION_UPDATED",view);
             log.debug("Location updated activityId={} userId={} elapsedMs={}", activityId, userId, elapsedMillis(started));
             return view;
@@ -112,9 +114,28 @@ public class RoomService {
     }
     private long elapsedMillis(long started) { return java.time.Duration.ofNanos(System.nanoTime() - started).toMillis(); }
     private LocalDateTime now() { return LocalDateTime.now(clock); }
-    private MessageView messageView(ChatMessage m) { User u=users.findById(m.getUserId()).orElseThrow(); return new MessageView(m.getId(),m.getUserId(),u.getNickname(),m.getContent(),m.getCreatedAt()); }
-    private PhotoView photoView(ActivityPhoto p, Long viewerId) { User u=users.findById(p.getUploaderId()).orElseThrow(); MediaAsset a=assets.findById(p.getMediaId()).orElseThrow(); Activity activity=activities.find(p.getActivityId()); boolean deletable=p.getUploaderId().equals(viewerId)||activity.getCreatorId().equals(viewerId); return new PhotoView(p.getId(),media.view(a,viewerId).url(),p.getUploaderId(),u.getNickname(),p.getCreatedAt(),deletable); }
-    private LocationView locationView(SharedLocation l) { User u=users.findById(l.getUserId()).orElseThrow(); return new LocationView(l.getUserId(),u.getNickname(),l.getLatitude(),l.getLongitude(),l.getAddress(),l.getUpdatedAt(),l.getExpiresAt()); }
+    // View builders load related users/assets with one IN query per list instead of one lookup per row.
+    private List<MessageView> messageViews(List<ChatMessage> list) {
+        Map<Long, User> byId = usersById(list.stream().map(ChatMessage::getUserId).toList());
+        return list.stream().map(m -> new MessageView(m.getId(), m.getUserId(), byId.get(m.getUserId()).getNickname(), m.getContent(), m.getCreatedAt())).toList();
+    }
+    private List<PhotoView> photoViews(List<ActivityPhoto> list, Long viewerId, Activity activity) {
+        Map<Long, User> byId = usersById(list.stream().map(ActivityPhoto::getUploaderId).toList());
+        Map<Long, MediaAsset> assetsById = list.isEmpty() ? Map.of()
+                : assets.findAllById(list.stream().map(ActivityPhoto::getMediaId).toList()).stream().collect(Collectors.toMap(MediaAsset::getId, Function.identity()));
+        boolean creator = activity.getCreatorId().equals(viewerId);
+        return list.stream().map(p -> new PhotoView(p.getId(), media.view(assetsById.get(p.getMediaId()), viewerId).url(), p.getUploaderId(),
+                byId.get(p.getUploaderId()).getNickname(), p.getCreatedAt(), creator || p.getUploaderId().equals(viewerId))).toList();
+    }
+    private List<LocationView> locationViews(List<SharedLocation> list) {
+        Map<Long, User> byId = usersById(list.stream().map(SharedLocation::getUserId).toList());
+        return list.stream().map(l -> new LocationView(l.getUserId(), byId.get(l.getUserId()).getNickname(), l.getLatitude(), l.getLongitude(),
+                l.getAddress(), l.getUpdatedAt(), l.getExpiresAt())).toList();
+    }
+    private Map<Long, User> usersById(Collection<Long> ids) {
+        if (ids.isEmpty()) return Map.of();
+        return users.findAllById(new HashSet<>(ids)).stream().collect(Collectors.toMap(User::getId, Function.identity()));
+    }
     public record MessageView(Long id,Long userId,String nickname,String content,LocalDateTime createdAt){}
     public record PhotoView(Long id,String url,Long uploaderId,String uploaderName,LocalDateTime createdAt,boolean deletable){}
     public record PhotoAdded(Long photoId){}

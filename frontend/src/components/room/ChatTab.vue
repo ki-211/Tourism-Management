@@ -27,7 +27,7 @@ import type { Message } from '@/services/types'
 
 const PAGE_SIZE = 50
 const CATCH_UP_SIZE = 100
-const props = defineProps<{ activityId: number; refreshKey: number }>()
+const props = defineProps<{ activityId: number; refreshKey: number; roomEvent?: any }>()
 const messages = ref<Message[]>([]), content = ref(''), me = currentUser()
 const loading = ref(true), error = ref(''), sending = ref(false)
 const hasMore = ref(false), loadingEarlier = ref(false)
@@ -90,6 +90,13 @@ async function loadEarlier() {
 }
 
 watch(() => props.refreshKey, (_, previous) => (previous === undefined ? load(true) : catchUp()), { immediate: true })
+// CHAT_CREATED carries the committed message, so it is appended without another request.
+watch(() => props.roomEvent, async event => {
+  if (event?.type !== 'CHAT_CREATED' || !event.payload || loading.value || error.value) return
+  merge([event.payload as Message])
+  await nextTick()
+  scrollTo('chat-end')
+})
 
 async function send() {
   if (!content.value.trim() || sending.value) return

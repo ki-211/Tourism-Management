@@ -2,7 +2,7 @@
   <view>
     <view class="tab-head row-between"><view><view class="section-title">签到任务</view><text class="muted">及时确认每位成员的行程状态</text></view><button v-if="creator" class="mini-primary" @click="create">＋ 发布</button></view>
     <view v-if="loading" class="loading-stack"><view v-for="item in 2" :key="item" class="skeleton-card"></view></view>
-    <LoadError v-else-if="error" :message="error" @retry="load" />
+    <LoadError v-else-if="error" :message="error" @retry="load()" />
     <view v-for="task in tasks" v-else :key="task.id" class="card task-card">
       <view class="row-between"><view class="task-icon">✓</view><text :class="task.signed ? 'tag' : 'pending-tag'">{{ task.signed ? '已签到' : '待签到' }}</text></view>
       <view class="section-title">{{ task.title }}</view>
@@ -21,18 +21,21 @@ import { ref, watch } from 'vue'
 import LoadError from '@/components/LoadError.vue'
 import { api } from '@/services/api'
 import type { SignTask } from '@/services/types'
-const props = defineProps<{ activityId: number; creator: boolean; refreshKey: number }>()
+const props = defineProps<{ activityId: number; creator: boolean; refreshKey: number; roomEvent?: any }>()
 const tasks = ref<SignTask[]>([])
 const loading = ref(false)
 const error = ref('')
-async function load() {
-  loading.value = true
+async function load(showLoading = true) {
+  if (showLoading) loading.value = true
   error.value = ''
   try { tasks.value = await api(`/activities/${props.activityId}/sign-tasks`) }
   catch (reason: any) { error.value = reason?.message || '签到任务加载失败'; tasks.value = [] }
   finally { loading.value = false }
 }
-watch(() => props.refreshKey, load, { immediate: true })
+watch(() => props.refreshKey, (_, previous) => load(previous === undefined), { immediate: true })
+watch(() => props.roomEvent, event => {
+  if (event?.type === 'SIGN_TASK_CREATED' || event?.type === 'SIGN_RECORD_CREATED') load(false)
+})
 const create = () => uni.navigateTo({ url: `/pages/signTask/signTask?id=${props.activityId}` })
 const detail = (id: number) => uni.navigateTo({ url: `/pages/signTaskDetail/signTaskDetail?taskId=${id}` })
 const sign = (id: number) => uni.navigateTo({ url: `/pages/signIn/signIn?taskId=${id}` })

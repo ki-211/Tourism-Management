@@ -5,9 +5,9 @@
     <template v-else-if="activity">
       <view class="tabs"><button v-for="(item, index) in tabs" :key="item" :class="{ active: tab === index }" @click="tab = index"><text>{{ item }}</text></button></view>
       <view class="room-body">
-        <ChatTab v-if="tab === 0" :activity-id="id" :refresh-key="refreshKey" />
-        <SignTab v-if="tab === 1" :activity-id="id" :creator="activity.creator" :refresh-key="refreshKey" />
-        <AlbumTab v-if="tab === 2" :activity-id="id" :refresh-key="refreshKey" />
+        <ChatTab v-if="tab === 0" :activity-id="id" :refresh-key="refreshKey" :room-event="roomEvent" />
+        <SignTab v-if="tab === 1" :activity-id="id" :creator="activity.creator" :refresh-key="refreshKey" :room-event="roomEvent" />
+        <AlbumTab v-if="tab === 2" :activity-id="id" :refresh-key="refreshKey" :room-event="roomEvent" />
         <LocationTab v-if="tab === 3" :activity-id="id" :activity-end-time="activity.endTime" :refresh-key="refreshKey" :room-event="roomEvent" />
       </view>
     </template>
@@ -54,8 +54,10 @@ async function loadActivity() {
           socket = null
           uni.showToast({ title: '已无权访问该活动空间', icon: 'none' })
           uni.navigateBack()
-        } else if (event?.type === 'LOCATION_UPDATED' || event?.type === 'LOCATION_REMOVED') roomEvent.value = event
-        else refreshKey.value++
+        } else if (event?.type === 'SOCKET_RECONNECTED') refreshKey.value++
+        else if (event?.type === 'CREATOR_TRANSFERRED') refreshActivity()
+        // Tabs apply events incrementally; only reconnects, pull-down and returning to the page revalidate.
+        else roomEvent.value = event
       })
       await socket.connect()
     }
@@ -69,8 +71,17 @@ async function loadActivity() {
   }
 }
 
+async function refreshActivity() {
+  try {
+    const loaded = await api<Activity>(`/activities/${id.value}`, 'GET', undefined, { silent: true })
+    if (loaded.joined) activity.value = loaded
+  } catch { return }
+}
+
+let shown = false
 onLoad((options: any) => { id.value = Number(options.id); loadActivity() })
-onShow(() => refreshKey.value++)
+// The first onShow follows onLoad, whose tabs already load; later ones silently revalidate the active tab.
+onShow(() => { if (shown) refreshKey.value++; shown = true })
 onPullDownRefresh(async () => {
   if (error.value) await loadActivity()
   else refreshKey.value++
