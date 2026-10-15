@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import java.security.SecureRandom;
@@ -58,7 +59,9 @@ public class ActivityService {
         return view(a, userId);
     }
 
-    @Transactional
+    // READ_COMMITTED: after taking the row lock, the seat/member count must see rows committed by the previous
+    // lock holder. Under MySQL's default REPEATABLE READ an earlier plain read would pin an older snapshot.
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public ActivityView join(Long userId, Long activityId, JoinCommand c) {
         Activity a = activities.findForUpdate(activityId).orElseThrow(() -> DomainException.notFound("活动不存在"));
         requireActive(a);
@@ -94,9 +97,11 @@ public class ActivityService {
         events.disconnect(userId, activityId);
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public ActivityView update(Long actorId, Long activityId, CreateCommand c) {
-        Activity a = creatorActivity(actorId, activityId);
+        // Same lock as join(), so lowering the capacity cannot race with a concurrent sign-up.
+        Activity a = activities.findForUpdate(activityId).orElseThrow(() -> DomainException.notFound("活动不存在"));
+        if (!a.getCreatorId().equals(actorId)) throw DomainException.forbidden("只有活动负责人可以执行该操作");
         requireActive(a);
         if (!LocalDateTime.now(clock).isBefore(a.getEndTime())) throw DomainException.conflict("ACTIVITY_ENDED", "活动已结束，不能再编辑");
         validateTimes(c.signupStart(), c.signupEnd(), c.startTime(), c.endTime());

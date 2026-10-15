@@ -7,6 +7,7 @@ import com.zkt.backend.auth.User;
 import com.zkt.backend.auth.UserRepository;
 import com.zkt.backend.common.DomainException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -41,7 +42,9 @@ public class VehicleService {
         return view(vehicles.save(v), userId);
     }
 
-    @Transactional
+    // READ_COMMITTED: after taking the row lock, the seat/member count must see rows committed by the previous
+    // lock holder. Under MySQL's default REPEATABLE READ an earlier plain read would pin an older snapshot.
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public VehicleView update(Long userId, Long activityId, Long vehicleId, Command c) {
         activities.requireActive(activities.creatorActivity(userId, activityId));
         Vehicle v = lockedVehicle(activityId, vehicleId);
@@ -60,7 +63,7 @@ public class VehicleService {
     }
 
     /** Seats a member: members may seat themselves, the leader may seat anyone. Moving to another vehicle frees the old seat. */
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public VehicleView board(Long actorId, Long activityId, Long vehicleId, Long targetUserId) {
         Long target = targetUserId == null ? actorId : targetUserId;
         if (target.equals(actorId)) activities.requireMember(activityId, actorId);
