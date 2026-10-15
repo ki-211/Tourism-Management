@@ -10,6 +10,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
@@ -31,15 +33,17 @@ public class AuthService {
     private final SharedLocationRepository locations;
     private final RoomEventPublisher events;
     private final AuthenticatedUserCache userCache;
+    private final TransactionTemplate transactions;
     private final SecureRandom random = new SecureRandom();
 
     public AuthService(UserRepository users, RefreshTokenRepository refreshTokens, PasswordEncoder encoder,
                        JwtService jwt, AppSecurityProperties properties, Clock clock, ActivityRepository activities,
                        SignupRepository signups, SharedLocationRepository locations, RoomEventPublisher events,
-                       AuthenticatedUserCache userCache) {
+                       AuthenticatedUserCache userCache, TransactionTemplate transactions) {
         this.users = users; this.refreshTokens = refreshTokens; this.encoder = encoder; this.jwt = jwt; this.properties = properties;
         this.clock = clock;
         this.activities = activities; this.signups = signups; this.locations = locations; this.events = events; this.userCache = userCache;
+        this.transactions = transactions;
     }
 
     @Transactional
@@ -141,8 +145,9 @@ public class AuthService {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
-    @Scheduled(cron = "0 0 * * * *") @Transactional
-    public void removeExpired() { refreshTokens.deleteByExpiresAtBefore(now()); }
+    @Scheduled(cron = "0 0 * * * *")
+    @SchedulerLock(name = "removeExpiredRefreshTokens", lockAtMostFor = "PT10M", lockAtLeastFor = "PT1M")
+    public void removeExpired() { transactions.executeWithoutResult(status -> refreshTokens.deleteByExpiresAtBefore(now())); }
 
     private LocalDateTime now() { return LocalDateTime.now(clock); }
 

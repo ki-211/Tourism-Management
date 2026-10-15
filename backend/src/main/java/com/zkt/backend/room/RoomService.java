@@ -15,6 +15,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -31,12 +33,15 @@ public class RoomService {
     private final SharedLocationRepository locations; private final MediaService media;
     private final MediaAssetRepository assets; private final RoomEventPublisher events;
     private final Clock clock;
+    private final TransactionTemplate transactions;
     public RoomService(ActivityService activities, UserRepository users, ChatMessageRepository messages,
                        ActivityPhotoRepository photos, SharedLocationRepository locations, MediaService media,
-                       MediaAssetRepository assets, RoomEventPublisher events, Clock clock) {
+                       MediaAssetRepository assets, RoomEventPublisher events, Clock clock,
+                       TransactionTemplate transactions) {
         this.activities=activities; this.users=users; this.messages=messages; this.photos=photos; this.locations=locations;
         this.media=media; this.assets=assets; this.events=events;
         this.clock=clock;
+        this.transactions=transactions;
     }
     @Transactional(readOnly = true)
     public List<MessageView> messages(Long userId, Long activityId, long afterId, Long beforeId, int limit) {
@@ -108,9 +113,13 @@ public class RoomService {
         activities.requireMember(activityId,userId); locations.deleteByActivityIdAndUserId(activityId,userId);
         events.publish(activityId,"LOCATION_REMOVED",new RemovedLocation(userId));
     }
-    @Scheduled(fixedDelay = 30000) @Transactional public void expireLocations() {
-        List<SharedLocation> expired=locations.findByExpiresAtBefore(now()); locations.deleteAll(expired);
-        expired.forEach(l->events.publish(l.getActivityId(),"LOCATION_REMOVED",new RemovedLocation(l.getUserId())));
+    @Scheduled(fixedDelay = 30000)
+    @SchedulerLock(name = "expireSharedLocations", lockAtMostFor = "PT1M", lockAtLeastFor = "PT15S")
+    public void expireLocations() {
+        transactions.executeWithoutResult(status -> {
+            List<SharedLocation> expired=locations.findByExpiresAtBefore(now()); locations.deleteAll(expired);
+            expired.forEach(l->events.publish(l.getActivityId(),"LOCATION_REMOVED",new RemovedLocation(l.getUserId())));
+        });
     }
     private long elapsedMillis(long started) { return java.time.Duration.ofNanos(System.nanoTime() - started).toMillis(); }
     private LocalDateTime now() { return LocalDateTime.now(clock); }
