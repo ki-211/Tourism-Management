@@ -13,9 +13,9 @@ import java.io.IOException;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
-    private final UserRepository users;
+    private final AuthenticatedUserCache users;
 
-    public JwtAuthenticationFilter(JwtService jwtService, UserRepository users) {
+    public JwtAuthenticationFilter(JwtService jwtService, AuthenticatedUserCache users) {
         this.jwtService = jwtService;
         this.users = users;
     }
@@ -26,9 +26,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (header != null && header.startsWith("Bearer ") && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
                 JwtService.AccessClaims claims = jwtService.parseAccessToken(header.substring(7));
-                User user = users.findById(claims.userId()).orElse(null);
-                if (user != null && user.getDeletedAt() == null && user.getTokenVersion() == claims.tokenVersion()) {
-                    UserPrincipal principal = UserPrincipal.from(user);
+                AuthenticatedUserCache.Snapshot user = users.find(claims.userId()).orElse(null);
+                if (user != null && !user.deleted() && user.tokenVersion() == claims.tokenVersion()) {
+                    UserPrincipal principal = user.principal();
                     SecurityContextHolder.getContext().setAuthentication(
                             new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
                 }

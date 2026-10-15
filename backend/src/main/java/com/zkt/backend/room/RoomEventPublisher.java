@@ -5,8 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
+import com.zkt.backend.common.AfterCommit;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -83,7 +82,7 @@ public class RoomEventPublisher {
 
     /** Publishes after the surrounding transaction commits, so clients that refetch over HTTP see committed data. */
     public void publish(Long activityId, String type, Object payload) {
-        afterCommit(() -> send(activityId, type, payload));
+        AfterCommit.run(() -> send(activityId, type, payload));
     }
 
     /**
@@ -91,7 +90,7 @@ public class RoomEventPublisher {
      * subscribed to that activity) on every instance, after the surrounding transaction commits.
      */
     public void disconnect(Long userId, Long activityId) {
-        afterCommit(() -> {
+        AfterCommit.run(() -> {
             if (!distributed) { closeLocal(userId, activityId); return; }
             try { redis.convertAndSend(channel, mapper.writeValueAsString(new Event(DISCONNECT_TYPE, activityId, 0, Instant.now(), new Disconnect(userId)))); }
             catch (Exception e) { log.warn("Realtime disconnect broadcast failed userId={} errorType={}", userId, e.getClass().getSimpleName()); }
@@ -139,14 +138,6 @@ public class RoomEventPublisher {
     }
 
     private WebSocketSession outbound(WebSocketSession session) { return connections.get(session.getId()); }
-
-    private static void afterCommit(Runnable action) {
-        if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override public void afterCommit() { action.run(); }
-            });
-        } else action.run();
-    }
 
     public record Event(String type, Long activityId, long sequence, Instant occurredAt, Object payload) {}
     public record Disconnect(Long userId) {}

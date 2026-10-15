@@ -8,8 +8,7 @@ import com.zkt.backend.attendance.SignRecordRepository;
 import com.zkt.backend.attendance.SignTask;
 import com.zkt.backend.attendance.SignTaskRepository;
 import com.zkt.backend.common.DomainException;
-import com.zkt.backend.auth.User;
-import com.zkt.backend.auth.UserRepository;
+import com.zkt.backend.auth.AuthenticatedUserCache;
 import com.zkt.backend.room.ActivityPhoto;
 import com.zkt.backend.room.ActivityPhotoRepository;
 import org.springframework.stereotype.Service;
@@ -23,11 +22,11 @@ public class MediaAuthorizationService {
     private final SignTaskRepository tasks;
     private final ActivityRepository activities;
     private final SignupRepository signups;
-    private final UserRepository users;
+    private final AuthenticatedUserCache users;
 
     public MediaAuthorizationService(MediaAssetRepository assets, ActivityPhotoRepository photos,
             SignRecordRepository records, SignTaskRepository tasks, ActivityRepository activities, SignupRepository signups,
-            UserRepository users) {
+            AuthenticatedUserCache users) {
         this.assets = assets; this.photos = photos; this.records = records; this.tasks = tasks;
         this.activities = activities; this.signups = signups;
         this.users = users;
@@ -35,8 +34,8 @@ public class MediaAuthorizationService {
 
     @Transactional(readOnly = true)
     public void requireAccess(Long userId, Long mediaId) {
-        User user = users.findById(userId).orElseThrow(() -> DomainException.forbidden("图片访问凭证无效"));
-        if (user.getDeletedAt() != null) throw DomainException.forbidden("图片访问凭证已失效");
+        AuthenticatedUserCache.Snapshot user = users.find(userId).orElseThrow(() -> DomainException.forbidden("图片访问凭证无效"));
+        if (user.deleted()) throw DomainException.forbidden("图片访问凭证已失效");
         MediaAsset asset = assets.findById(mediaId).orElseThrow(() -> DomainException.notFound("图片不存在"));
         if ("COVER".equals(asset.getPurpose())) return;
         if ("ALBUM".equals(asset.getPurpose())) {

@@ -30,14 +30,16 @@ public class AuthService {
     private final SignupRepository signups;
     private final SharedLocationRepository locations;
     private final RoomEventPublisher events;
+    private final AuthenticatedUserCache userCache;
     private final SecureRandom random = new SecureRandom();
 
     public AuthService(UserRepository users, RefreshTokenRepository refreshTokens, PasswordEncoder encoder,
                        JwtService jwt, AppSecurityProperties properties, Clock clock, ActivityRepository activities,
-                       SignupRepository signups, SharedLocationRepository locations, RoomEventPublisher events) {
+                       SignupRepository signups, SharedLocationRepository locations, RoomEventPublisher events,
+                       AuthenticatedUserCache userCache) {
         this.users = users; this.refreshTokens = refreshTokens; this.encoder = encoder; this.jwt = jwt; this.properties = properties;
         this.clock = clock;
-        this.activities = activities; this.signups = signups; this.locations = locations; this.events = events;
+        this.activities = activities; this.signups = signups; this.locations = locations; this.events = events; this.userCache = userCache;
     }
 
     @Transactional
@@ -105,6 +107,7 @@ public class AuthService {
         user.setRole("DELETED");
         user.setDeletedAt(now());
         user.setTokenVersion(user.getTokenVersion() + 1);
+        userCache.invalidate(userId);
         events.disconnect(userId, null);
     }
 
@@ -117,6 +120,7 @@ public class AuthService {
     private void revokeSessions(User user) {
         refreshTokens.deleteByUserId(user.getId());
         user.setTokenVersion(user.getTokenVersion() + 1);
+        userCache.invalidate(user.getId());
         events.disconnect(user.getId(), null);
     }
 
