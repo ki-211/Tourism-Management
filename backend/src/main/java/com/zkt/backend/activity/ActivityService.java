@@ -47,7 +47,7 @@ public class ActivityService {
         validateTimes(c.signupStart(), c.signupEnd(), c.startTime(), c.endTime());
         Activity a = new Activity(); a.setTitle(c.title().trim()); a.setDescription(c.description()); a.setLocation(c.location().trim());
         a.setStartTime(c.startTime()); a.setEndTime(c.endTime()); a.setSignupStart(c.signupStart()); a.setSignupEnd(c.signupEnd());
-        a.setFeeRule(c.feeRule()); a.setVisibility(c.visibility()); a.setCreatorId(userId);
+        a.setFeeRule(c.feeRule()); a.setVisibility(c.visibility()); a.setCreatorId(userId); a.setCapacity(c.capacity());
         if (c.visibility() == ActivityVisibility.INVITE_ONLY) a.setInvitationCode(uniqueCode());
         activities.save(a);
         Signup creator = new Signup(); creator.setActivityId(a.getId()); creator.setUserId(userId); creator.setRemark("活动负责人");
@@ -57,7 +57,8 @@ public class ActivityService {
 
     @Transactional
     public ActivityView join(Long userId, Long activityId, JoinCommand c) {
-        Activity a = find(activityId);
+        Activity a = activities.findForUpdate(activityId).orElseThrow(() -> DomainException.notFound("活动不存在"));
+        requireActive(a);
         LocalDateTime now = LocalDateTime.now(clock);
         if (now.isBefore(a.getSignupStart()) || now.isAfter(a.getSignupEnd()))
             throw DomainException.badRequest("SIGNUP_CLOSED", "当前不在报名时间内");
@@ -66,6 +67,9 @@ public class ActivityService {
         if (a.getVisibility() == ActivityVisibility.INVITE_ONLY &&
                 (c.invitationCode() == null || !a.getInvitationCode().equalsIgnoreCase(c.invitationCode().trim())))
             throw DomainException.forbidden("邀请码不正确");
+        // The row lock taken above makes this count-then-insert safe against concurrent sign-ups.
+        if (a.getCapacity() != null && signups.countByActivityId(activityId) >= a.getCapacity())
+            throw DomainException.conflict("ACTIVITY_FULL", "活动名额已满");
         Signup s = new Signup(); s.setActivityId(activityId); s.setUserId(userId); s.setGrade(c.grade());
         s.setPassengerCount(c.passengerCount()); s.setRemark(c.remark()); signups.save(s);
         return view(a, userId);
@@ -87,6 +91,40 @@ public class ActivityService {
     }
 
     @Transactional
+    public ActivityView update(Long actorId, Long activityId, CreateCommand c) {
+        Activity a = creatorActivity(actorId, activityId);
+        requireActive(a);
+        if (!LocalDateTime.now(clock).isBefore(a.getEndTime())) throw DomainException.conflict("ACTIVITY_ENDED", "活动已结束，不能再编辑");
+        validateTimes(c.signupStart(), c.signupEnd(), c.startTime(), c.endTime());
+        if (c.capacity() != null && signups.countByActivityId(activityId) > c.capacity())
+            throw DomainException.conflict("CAPACITY_BELOW_MEMBERS", "人数上限不能少于当前已报名人数");
+        a.setTitle(c.title().trim()); a.setDescription(c.description()); a.setLocation(c.location().trim());
+        a.setStartTime(c.startTime()); a.setEndTime(c.endTime()); a.setSignupStart(c.signupStart()); a.setSignupEnd(c.signupEnd());
+        a.setFeeRule(c.feeRule()); a.setCapacity(c.capacity());
+        if (c.visibility() != a.getVisibility()) {
+            a.setVisibility(c.visibility());
+            a.setInvitationCode(c.visibility() == ActivityVisibility.INVITE_ONLY ? uniqueCode() : null);
+        }
+        activities.saveAndFlush(a);
+        events.publish(activityId, "ACTIVITY_UPDATED", new ActivityChanged(activityId, null));
+        return view(a, actorId);
+    }
+
+    @Transactional
+    public ActivityView cancel(Long actorId, Long activityId, String reason) {
+        Activity a = creatorActivity(actorId, activityId);
+        requireActive(a);
+        if (!LocalDateTime.now(clock).isBefore(a.getEndTime())) throw DomainException.conflict("ACTIVITY_ENDED", "活动已结束，无需取消");
+        a.setStatus(ActivityStatus.CANCELLED);
+        a.setCancelReason(reason == null || reason.isBlank() ? null : reason.trim());
+        a.setCancelledAt(LocalDateTime.now(clock));
+        locations.deleteByActivityId(activityId);
+        activities.saveAndFlush(a);
+        events.publish(activityId, "ACTIVITY_CANCELLED", new ActivityChanged(activityId, a.getCancelReason()));
+        return view(a, actorId);
+    }
+
+    @Transactional
     public ActivityView transfer(Long actorId, Long activityId, Long newCreatorId) {
         Activity a = creatorActivity(actorId, activityId);
         if (actorId.equals(newCreatorId)) throw DomainException.badRequest("SAME_CREATOR", "新负责人不能是自己");
@@ -100,6 +138,7 @@ public class ActivityService {
     @Transactional
     public ActivityView rotateInvitation(Long actorId, Long activityId) {
         Activity a = creatorActivity(actorId, activityId);
+        requireActive(a);
         if (a.getVisibility() != ActivityVisibility.INVITE_ONLY)
             throw DomainException.badRequest("PUBLIC_ACTIVITY", "公开活动不需要邀请码");
         a.setInvitationCode(uniqueCode()); return view(a, actorId);
@@ -108,6 +147,7 @@ public class ActivityService {
     @Transactional
     public ActivityView uploadCover(Long actorId, Long activityId, MultipartFile file) {
         Activity a = creatorActivity(actorId, activityId);
+        requireActive(a);
         MediaAsset old = a.getCoverMediaId() == null ? null : assets.findById(a.getCoverMediaId()).orElse(null);
         MediaAsset asset = media.saveImage(actorId, "COVER", file); a.setCoverMediaId(asset.getId());
         activities.saveAndFlush(a);
@@ -138,7 +178,7 @@ public class ActivityService {
             case "joined" -> activities.findJoined(userId, pr);
             case "created" -> activities.findByCreatorIdOrderByCreatedAtDesc(userId, pr);
             case "open" -> activities.findOpen(ActivityVisibility.PUBLIC, LocalDateTime.now(clock), pr);
-            default -> activities.findByVisibilityOrderByCreatedAtDesc(ActivityVisibility.PUBLIC, pr);
+            default -> activities.findByVisibilityAndStatusOrderByCreatedAtDesc(ActivityVisibility.PUBLIC, ActivityStatus.ACTIVE, pr);
         };
         return new PageImpl<>(views(result.getContent(), userId), result.getPageable(), result.getTotalElements());
     }
@@ -157,6 +197,11 @@ public class ActivityService {
     public boolean isMember(Long activityId, Long userId) { return signups.existsByActivityIdAndUserId(activityId, userId); }
     public void requireMember(Long activityId, Long userId) { if (!isMember(activityId, userId)) throw DomainException.forbidden("请先报名该活动"); }
     public Activity find(Long id) { return activities.findById(id).orElseThrow(() -> DomainException.notFound("活动不存在")); }
+    /** Cancelled activities are read-only: no sign-ups, messages, photos, locations, sign-ins or vehicles. */
+    public void requireActive(Activity a) {
+        if (a.getStatus() == ActivityStatus.CANCELLED) throw DomainException.conflict("ACTIVITY_CANCELLED", "活动已取消");
+    }
+    public Activity activeActivity(Long id) { Activity a = find(id); requireActive(a); return a; }
     public Activity creatorActivity(Long userId, Long id) {
         Activity a = find(id); if (!a.getCreatorId().equals(userId)) throw DomainException.forbidden("只有活动负责人可以执行该操作"); return a;
     }
@@ -170,7 +215,10 @@ public class ActivityService {
         List<Long> coverIds = list.stream().map(Activity::getCoverMediaId).filter(Objects::nonNull).distinct().toList();
         Map<Long, MediaAsset> covers = coverIds.isEmpty() ? Map.of()
                 : assets.findAllById(coverIds).stream().collect(Collectors.toMap(MediaAsset::getId, Function.identity()));
-        Set<Long> joined = new HashSet<>(signups.findJoinedActivityIds(viewerId, list.stream().map(Activity::getId).toList()));
+        List<Long> ids = list.stream().map(Activity::getId).toList();
+        Set<Long> joined = new HashSet<>(signups.findJoinedActivityIds(viewerId, ids));
+        Map<Long, Long> memberCounts = new HashMap<>();
+        signups.countByActivityIds(ids).forEach(row -> memberCounts.put((Long) row[0], ((Number) row[1]).longValue()));
         return list.stream().map(a -> {
             MediaAsset coverAsset = a.getCoverMediaId() == null ? null : covers.get(a.getCoverMediaId());
             MediaService.MediaView cover = coverAsset == null ? null : media.view(coverAsset, viewerId);
@@ -179,7 +227,8 @@ public class ActivityService {
                     a.getSignupStart(), a.getSignupEnd(), a.getVisibility(), creatorView ? a.getInvitationCode() : null,
                     a.getFeeRule(), a.getCreatorId(), creators.get(a.getCreatorId()).getNickname(),
                     cover == null ? null : cover.url(), cover == null ? null : cover.thumbnailUrl(),
-                    joined.contains(a.getId()), creatorView, a.getCreatedAt());
+                    joined.contains(a.getId()), creatorView, a.getCapacity(), memberCounts.getOrDefault(a.getId(), 0L),
+                    a.getStatus(), a.getCancelReason(), a.getCreatedAt());
         }).toList();
     }
 
@@ -202,15 +251,17 @@ public class ActivityService {
     }
 
     public record CreateCommand(String title, String description, String location, LocalDateTime startTime, LocalDateTime endTime,
-                                LocalDateTime signupStart, LocalDateTime signupEnd, ActivityVisibility visibility, String feeRule) {}
+                                LocalDateTime signupStart, LocalDateTime signupEnd, ActivityVisibility visibility, String feeRule,
+                                Integer capacity) {}
     public record JoinCommand(String invitationCode, String grade, Integer passengerCount, String remark) {}
     public record ActivityView(Long id, String title, String description, String location, LocalDateTime startTime, LocalDateTime endTime,
                                LocalDateTime signupStart, LocalDateTime signupEnd, ActivityVisibility visibility, String invitationCode,
                                String feeRule, Long creatorId, String creatorName, String coverUrl, String coverThumbnailUrl,
-                               boolean joined, boolean creator,
-                               LocalDateTime createdAt) {}
+                               boolean joined, boolean creator, Integer capacity, long memberCount, ActivityStatus status,
+                               String cancelReason, LocalDateTime createdAt) {}
     public record InvitationPreview(Long id, String title, String location, LocalDateTime startTime, LocalDateTime endTime, LocalDateTime signupEnd) {}
     public record MemberView(Long userId, String username, String nickname, String grade, Integer passengerCount, String remark, LocalDateTime joinedAt) {}
     public record CreatorTransfer(Long previousCreatorId, Long newCreatorId) {}
     public record MemberLeft(Long userId) {}
+    public record ActivityChanged(Long activityId, String cancelReason) {}
 }

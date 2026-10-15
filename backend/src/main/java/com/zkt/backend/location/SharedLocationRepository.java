@@ -11,4 +11,5 @@ public interface SharedLocationRepository extends JpaRepository<SharedLocation, 
     List<SharedLocation> findByExpiresAtBefore(LocalDateTime time);
     void deleteByActivityIdAndUserId(Long activityId, Long userId);
     void deleteByUserId(Long userId);
+    void deleteByActivityId(Long activityId);
 }

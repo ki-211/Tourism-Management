@@ -106,8 +106,8 @@ public class AuthService {
         User user = activeUser(userId);
         if (!encoder.matches(password, user.getPasswordHash()))
             throw new DomainException(HttpStatus.UNAUTHORIZED, "BAD_CREDENTIALS", "密码错误");
-        if (activities.existsByCreatorId(userId))
-            throw DomainException.conflict("CREATOR_MUST_TRANSFER", "请先转让名下所有活动的负责人，再注销账号");
+        if (activities.existsByCreatorIdAndStatus(userId, com.zkt.backend.activity.ActivityStatus.ACTIVE))
+            throw DomainException.conflict("CREATOR_MUST_TRANSFER", "请先转让或取消名下所有进行中的活动，再注销账号");
         locations.deleteByUserId(userId);
         signups.deleteByUserId(userId);
         refreshTokens.deleteByUserId(userId);

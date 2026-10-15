@@ -1,6 +1,6 @@
 <template>
   <view>
-    <view class="tab-head row-between"><view><view class="section-title">签到任务</view><text class="muted">及时确认每位成员的行程状态</text></view><button v-if="creator" class="mini-primary" @click="create">＋ 发布</button></view>
+    <view class="tab-head row-between"><view><view class="section-title">签到任务</view><text class="muted">及时确认每位成员的行程状态</text></view><button v-if="creator && !readonly" class="mini-primary" @click="create">＋ 发布</button></view>
     <view v-if="loading" class="loading-stack"><view v-for="item in 2" :key="item" class="skeleton-card"></view></view>
     <LoadError v-else-if="error" :message="error" @retry="load()" />
     <view v-for="task in tasks" v-else :key="task.id" class="card task-card">
@@ -10,7 +10,7 @@
       <view class="task-count">已有 <text>{{ task.signedCount }}</text> 人完成签到</view>
       <view class="task-actions">
         <button v-if="creator" class="ghost-btn" @click="detail(task.id)">查看详情</button>
-        <button v-if="!task.signed" class="mini-primary" @click="sign(task.id)">立即签到</button>
+        <button v-if="!task.signed && !readonly" class="mini-primary" @click="sign(task.id)">立即签到</button>
       </view>
     </view>
     <view v-if="!loading && !error && !tasks.length" class="empty">暂无签到任务</view>
@@ -21,7 +21,7 @@ import { ref, watch } from 'vue'
 import LoadError from '@/components/LoadError.vue'
 import { api } from '@/services/api'
 import type { SignTask } from '@/services/types'
-const props = defineProps<{ activityId: number; creator: boolean; refreshKey: number; roomEvent?: any }>()
+const props = defineProps<{ activityId: number; creator: boolean; refreshKey: number; roomEvent?: any; readonly?: boolean }>()
 const tasks = ref<SignTask[]>([])
 const loading = ref(false)
 const error = ref('')

@@ -22,6 +22,11 @@ public class Activity {
     @Column(name = "fee_rule", length = 500) private String feeRule;
     @Column(name = "creator_id", nullable = false) private Long creatorId;
     @Column(name = "cover_media_id") private Long coverMediaId;
+    /** Maximum members including the leader; null means unlimited. */
+    private Integer capacity;
+    @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) private ActivityStatus status = ActivityStatus.ACTIVE;
+    @Column(name = "cancel_reason", length = 200) private String cancelReason;
+    @Column(name = "cancelled_at") private LocalDateTime cancelledAt;
     @Version private Long version;
     @Column(name = "created_at", nullable = false) private LocalDateTime createdAt;
     @Column(name = "updated_at", nullable = false) private LocalDateTime updatedAt;

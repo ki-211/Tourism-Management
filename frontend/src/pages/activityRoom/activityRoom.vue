@@ -3,24 +3,26 @@
     <view v-if="loading" class="loading-stack"><view class="skeleton-card head-skeleton"></view><view class="skeleton-card content-skeleton"></view></view>
     <LoadError v-else-if="error" :message="error" @retry="loadActivity" />
     <template v-else-if="activity">
+      <view v-if="readonly" class="cancel-banner">活动已取消{{ activity.cancelReason ? `：${activity.cancelReason}` : '' }}，活动空间仅供查看</view>
       <view class="tabs"><button v-for="(item, index) in tabs" :key="item" :class="{ active: tab === index }" @click="tab = index"><text>{{ item }}</text></button></view>
       <view class="room-body">
-        <ChatTab v-if="tab === 0" :activity-id="id" :refresh-key="refreshKey" :room-event="roomEvent" />
-        <SignTab v-if="tab === 1" :activity-id="id" :creator="activity.creator" :refresh-key="refreshKey" :room-event="roomEvent" />
-        <AlbumTab v-if="tab === 2" :activity-id="id" :refresh-key="refreshKey" :room-event="roomEvent" />
-        <LocationTab v-if="tab === 3" :activity-id="id" :activity-end-time="activity.endTime" :refresh-key="refreshKey" :room-event="roomEvent" />
+        <ChatTab v-if="tab === 0" :activity-id="id" :refresh-key="refreshKey" :room-event="roomEvent" :readonly="readonly" />
+        <SignTab v-if="tab === 1" :activity-id="id" :creator="activity.creator" :refresh-key="refreshKey" :room-event="roomEvent" :readonly="readonly" />
+        <AlbumTab v-if="tab === 2" :activity-id="id" :refresh-key="refreshKey" :room-event="roomEvent" :readonly="readonly" />
+        <LocationTab v-if="tab === 3" :activity-id="id" :activity-end-time="activity.endTime" :refresh-key="refreshKey" :room-event="roomEvent" :readonly="readonly" />
       </view>
     </template>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { onLoad, onPullDownRefresh, onUnload, onShow } from '@dcloudio/uni-app'
 import LoadError from '@/components/LoadError.vue'
 import { api } from '@/services/api'
 import { ActivitySocket } from '@/services/realtime'
 import type { Activity } from '@/services/types'
+import { useLocationSharingStore } from '@/stores/locationSharing'
 import ChatTab from '@/components/room/ChatTab.vue'
 import SignTab from '@/components/room/SignTab.vue'
 import AlbumTab from '@/components/room/AlbumTab.vue'
@@ -55,7 +57,8 @@ async function loadActivity() {
           uni.showToast({ title: '已无权访问该活动空间', icon: 'none' })
           uni.navigateBack()
         } else if (event?.type === 'SOCKET_RECONNECTED') refreshKey.value++
-        else if (event?.type === 'CREATOR_TRANSFERRED') refreshActivity()
+        else if (event?.type === 'CREATOR_TRANSFERRED' || event?.type === 'ACTIVITY_UPDATED') refreshActivity()
+        else if (event?.type === 'ACTIVITY_CANCELLED') onCancelled()
         // Tabs apply events incrementally; only reconnects, pull-down and returning to the page revalidate.
         else roomEvent.value = event
       })
@@ -69,6 +72,15 @@ async function loadActivity() {
   } finally {
     loading.value = false
   }
+}
+
+const readonly = computed(() => activity.value?.status === 'CANCELLED')
+const sharingStore = useLocationSharingStore()
+
+async function onCancelled() {
+  await refreshActivity()
+  if (sharingStore.activityId === id.value && sharingStore.sharing) await sharingStore.stop(true).catch(() => undefined)
+  refreshKey.value++
 }
 
 async function refreshActivity() {
@@ -91,6 +103,7 @@ onUnload(() => socket?.close())
 </script>
 <style scoped lang="scss">
 .room-page{padding-top:20rpx}
+.cancel-banner{flex-shrink:0;margin-bottom:20rpx;padding:18rpx 22rpx;color:$danger;font-size:24rpx;line-height:1.5;background:#fff0f0;border-radius:16rpx}
 .room-page.is-chat{
   display:flex;
   flex-direction:column;

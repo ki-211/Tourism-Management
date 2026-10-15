@@ -16,6 +16,7 @@
       </view>
       <view class="info-line"><text class="info-icon">⌖</text><text class="info-value">{{ activity.location }}</text></view>
       <view class="info-line"><text class="info-icon">◷</text><text class="info-value">{{ timeText }}</text></view>
+      <view class="info-line"><text class="info-icon">◎</text><text class="info-value">{{ membersText }}</text></view>
       <view class="meta-row">
         <text class="host">发起人 {{ activity.creatorName }}</text>
         <text v-if="activity.joined" class="tag">{{ activity.creator ? '我负责' : '已参与' }}</text>
@@ -38,7 +39,11 @@ const now = useCurrentTime()
 const life = computed(() => activityLife(props.activity, now.value))
 const lifeLabel = computed(() => activityLifeLabel[life.value])
 const timeText = computed(() => displayTimeRange(props.activity.startTime, props.activity.endTime, now.value))
+const membersText = computed(() => props.activity.capacity
+  ? `已报名 ${props.activity.memberCount} / ${props.activity.capacity} 人${props.activity.memberCount >= props.activity.capacity ? '（已满）' : ''}`
+  : `已报名 ${props.activity.memberCount} 人`)
 const deadlineText = computed(() => {
+  if (life.value === 'cancelled') return '活动已取消'
   if (life.value === 'upcoming') return `${displayTime(props.activity.signupStart, now.value)} 开始报名`
   if (life.value === 'signup') return `报名至 ${displayTime(props.activity.signupEnd, now.value)}`
   if (life.value === 'closed') return '报名已截止'
@@ -69,6 +74,7 @@ const deadlineText = computed(() => {
 .life-tag.ongoing { background: $success; }
 .life-tag.closed { background: $warning; }
 .life-tag.ended { background: rgba(23, 35, 33, .45); }
+.life-tag.cancelled { background: $danger; }
 .content { padding: 28rpx 30rpx 30rpx; }
 .title-row { align-items: flex-start; }
 .title { min-width: 0; color: $text-main; font-size: 34rpx; font-weight: 750; line-height: 1.35; word-break: break-word; }

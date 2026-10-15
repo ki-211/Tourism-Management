@@ -1,9 +1,9 @@
 <template>
   <view class="page">
     <view class="page-head">
-      <text class="eyebrow">发布活动</text>
-      <view class="page-title">发布新活动</view>
-      <text class="muted">填写完整信息，让参与者一眼了解行程安排。</text>
+      <text class="eyebrow">{{ editingId ? '编辑活动' : '发布活动' }}</text>
+      <view class="page-title">{{ editingId ? '修改活动信息' : '发布新活动' }}</view>
+      <text class="muted">{{ editingId ? '保存后会实时通知活动成员。' : '填写完整信息，让参与者一眼了解行程安排。' }}</text>
     </view>
     <view class="card form-card">
       <view class="form-section">
@@ -24,6 +24,11 @@
           <picker :range="['公开活动', '邀请制活动']" @change="form.visibility = Number($event.detail.value) === 0 ? 'PUBLIC' : 'INVITE_ONLY'">
             <view class="input picker-value"><text>{{ form.visibility === 'PUBLIC' ? '公开活动' : '邀请制活动' }}</text><text class="picker-arrow">⌄</text></view>
           </picker>
+        </view>
+        <view class="field" :class="{ 'has-error': errors.capacity }">
+          <text class="field-label">人数上限（选填，含负责人）</text>
+          <input v-model="form.capacity" class="input" type="number" maxlength="5" placeholder="不填表示不限人数" @input="clearError('capacity')" />
+          <text v-if="errors.capacity" class="field-error">{{ errors.capacity }}</text>
         </view>
       </view>
 
@@ -59,9 +64,10 @@
 
       <view class="form-section">
         <text class="form-section-title">补充说明</text>
-        <text class="form-section-desc">费用、介绍和封面均可稍后完善</text>
+        <text class="form-section-desc">{{ editingId ? '封面可在活动详情页更新' : '费用、介绍和封面均可稍后完善' }}</text>
         <view class="field"><text class="field-label">费用说明</text><textarea v-model="form.feeRule" class="textarea" maxlength="300" placeholder="例如：AA 制，门票自理" /></view>
         <view class="field"><text class="field-label">活动说明</text><textarea v-model="form.description" class="textarea" maxlength="2000" placeholder="介绍活动安排和注意事项" /></view>
+        <template v-if="!editingId">
         <view v-if="cover" class="cover-preview">
           <image :src="cover" mode="aspectFill" />
           <button class="cover-remove" @click="cover = ''">移除</button>
@@ -69,9 +75,10 @@
         <text class="image-tip">图片会自动压缩，并居中裁剪为 16:9 封面</text>
         <button class="secondary-btn" :loading="processingCover" :disabled="loading || processingCover" @click="chooseCover">{{ processingCover ? '正在裁剪…' : cover ? '重新选择封面' : '选择活动封面（可选）' }}</button>
         <view v-if="uploadProgress > 0" class="upload-progress"><view class="progress-copy"><text>正在上传封面</text><text>{{ uploadProgress }}%</text></view><view class="progress-track"><view :style="{ width: `${uploadProgress}%` }"></view></view></view>
+        </template>
       </view>
 
-      <button class="primary-btn" :loading="loading" :disabled="loading" @click="submit">确认发布</button>
+      <button class="primary-btn" :loading="loading" :disabled="loading" @click="submit">{{ editingId ? '保存修改' : '确认发布' }}</button>
     </view>
     <canvas id="coverCropCanvas" canvas-id="coverCropCanvas" class="crop-canvas"></canvas>
   </view>
@@ -79,6 +86,7 @@
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import DateTimeField from '@/components/DateTimeField.vue'
 import { api, upload } from '@/services/api'
 import { apiTime } from '@/utils/time'
@@ -87,7 +95,8 @@ const loading = ref(false)
 const cover = ref('')
 const processingCover = ref(false)
 const uploadProgress = ref(0)
-const form = reactive<any>({ title: '', location: '', startTime: '', endTime: '', signupStart: '', signupEnd: '', visibility: 'PUBLIC', feeRule: '', description: '' })
+const editingId = ref(0)
+const form = reactive<any>({ title: '', location: '', startTime: '', endTime: '', signupStart: '', signupEnd: '', visibility: 'PUBLIC', feeRule: '', description: '', capacity: '' })
 const errors = reactive<Record<string, string>>({})
 const times = [
   { key: 'signupStart', label: '报名开始' },
@@ -95,6 +104,19 @@ const times = [
   { key: 'startTime', label: '活动开始' },
   { key: 'endTime', label: '活动结束' }
 ]
+
+onLoad(async (options: any) => {
+  if (!options?.id) return
+  editingId.value = Number(options.id)
+  uni.setNavigationBarTitle({ title: '编辑活动' })
+  const activity = await api<any>(`/activities/${editingId.value}`)
+  Object.assign(form, {
+    title: activity.title, location: activity.location, visibility: activity.visibility,
+    feeRule: activity.feeRule || '', description: activity.description || '', capacity: activity.capacity ? String(activity.capacity) : ''
+  })
+  // DateTimeField works with minute precision ("YYYY-MM-DDTHH:mm").
+  times.forEach(item => { form[item.key] = String(activity[item.key] || '').slice(0, 16) })
+})
 
 function clearError(key: string) {
   errors[key] = ''
@@ -156,6 +178,8 @@ function validate() {
     else if (signupEnd > startTime) errors.startTime = '活动开始不能早于报名结束'
     if (startTime >= endTime) errors.endTime = '活动结束时间必须晚于活动开始时间'
   }
+  const capacity = String(form.capacity ?? '').trim()
+  if (capacity && (!/^\d+$/.test(capacity) || Number(capacity) < 2 || Number(capacity) > 10000)) errors.capacity = '人数上限须为 2–10000 的整数（含负责人）'
   return !Object.values(errors).some(Boolean)
 }
 
@@ -168,8 +192,14 @@ async function submit() {
   }
   loading.value = true
   try {
-    const payload = { ...form }
+    const payload = { ...form, capacity: String(form.capacity ?? '').trim() ? Number(form.capacity) : null }
     times.forEach(item => { payload[item.key] = apiTime(payload[item.key]) })
+    if (editingId.value) {
+      await api(`/activities/${editingId.value}`, 'PUT', payload)
+      uni.showToast({ title: '已保存' })
+      setTimeout(() => uni.navigateBack(), 500)
+      return
+    }
     const activity = await api<any>('/activities', 'POST', payload)
     if (cover.value) {
       uploadProgress.value = 1

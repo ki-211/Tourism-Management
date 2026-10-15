@@ -1,6 +1,6 @@
 <template>
   <view>
-    <view class="tab-head row-between"><view><view class="section-title">活动相册</view><text class="muted">共享活动中的精彩瞬间</text></view><button class="mini-primary" :loading="uploading" :disabled="uploading" @click="choose">＋ 上传</button></view>
+    <view class="tab-head row-between"><view><view class="section-title">活动相册</view><text class="muted">共享活动中的精彩瞬间</text></view><button v-if="!readonly" class="mini-primary" :loading="uploading" :disabled="uploading" @click="choose">＋ 上传</button></view>
     <view v-if="uploading" class="upload-progress"><view class="progress-copy"><text>正在压缩并上传</text><text>{{ progress }}%</text></view><view class="progress-track"><view :style="{ width: `${progress}%` }"></view></view></view>
     <view v-if="loading" class="photo-grid"><view v-for="item in 6" :key="item" class="photo-skeleton"></view></view>
     <LoadError v-else-if="error" :message="error" @retry="load()" />
@@ -16,7 +16,7 @@ import type { Photo } from '@/services/types'
 import { reuseSignedUrls } from '@/utils/photos'
 // Private photo URLs are signed for 5 minutes; reuse them for 4 so <image> keeps its cached copy.
 const URL_REUSE_MS = 4 * 60 * 1000
-const props = defineProps<{ activityId: number; refreshKey: number; roomEvent?: any }>()
+const props = defineProps<{ activityId: number; refreshKey: number; roomEvent?: any; readonly?: boolean }>()
 const photos = ref<Photo[]>([])
 const loading = ref(false)
 const uploading = ref(false)

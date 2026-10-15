@@ -11,7 +11,8 @@
       <view v-if="!messages.length" class="empty">还没有消息，来打个招呼吧</view>
       <view id="chat-end" class="scroll-end"></view>
     </scroll-view>
-    <view class="composer">
+    <view v-if="readonly" class="history-hint">活动已取消，无法发送新消息</view>
+    <view v-else class="composer">
       <input v-model="content" class="input" maxlength="1000" confirm-type="send" :adjust-position="true" :cursor-spacing="24" placeholder="说点什么…" @confirm="send" />
       <button size="mini" class="mini-primary" :loading="sending" :disabled="sending" @click="send">发送</button>
     </view>
@@ -27,7 +28,7 @@ import type { Message } from '@/services/types'
 
 const PAGE_SIZE = 50
 const CATCH_UP_SIZE = 100
-const props = defineProps<{ activityId: number; refreshKey: number; roomEvent?: any }>()
+const props = defineProps<{ activityId: number; refreshKey: number; roomEvent?: any; readonly?: boolean }>()
 const messages = ref<Message[]>([]), content = ref(''), me = currentUser()
 const loading = ref(true), error = ref(''), sending = ref(false)
 const hasMore = ref(false), loadingEarlier = ref(false)

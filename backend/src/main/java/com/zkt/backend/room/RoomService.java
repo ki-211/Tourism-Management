@@ -2,6 +2,7 @@ package com.zkt.backend.room;
 
 import com.zkt.backend.activity.ActivityService;
 import com.zkt.backend.activity.Activity;
+import com.zkt.backend.activity.ActivityStatus;
 import com.zkt.backend.common.DomainException;
 import com.zkt.backend.auth.User;
 import com.zkt.backend.auth.UserRepository;
@@ -56,6 +57,7 @@ public class RoomService {
     @Transactional
     public MessageView send(Long userId, Long activityId, String content) {
         activities.requireMember(activityId, userId);
+        activities.activeActivity(activityId);
         ChatMessage m = new ChatMessage(); m.setActivityId(activityId); m.setUserId(userId); m.setContent(content.trim());
         MessageView view = messageViews(List.of(messages.save(m))).get(0); events.publish(activityId, "CHAT_CREATED", view); return view;
     }
@@ -65,7 +67,8 @@ public class RoomService {
     }
     @Transactional
     public PhotoView uploadPhoto(Long userId, Long activityId, MultipartFile file) {
-        activities.requireMember(activityId, userId); MediaAsset asset = media.saveImage(userId, "ALBUM", file);
+        activities.requireMember(activityId, userId); activities.activeActivity(activityId);
+        MediaAsset asset = media.saveImage(userId, "ALBUM", file);
         ActivityPhoto p = new ActivityPhoto(); p.setActivityId(activityId); p.setUploaderId(userId); p.setMediaId(asset.getId());
         PhotoView view = photoViews(List.of(photos.save(p)), userId, activities.find(activityId)).get(0); events.publish(activityId, "PHOTO_ADDED", new PhotoAdded(view.id())); return view;
     }
@@ -86,7 +89,7 @@ public class RoomService {
     public List<LocationView> locations(Long userId, Long activityId) {
         activities.requireMember(activityId, userId);
         Activity activity = activities.find(activityId);
-        if (!now().isBefore(activity.getEndTime())) return List.of();
+        if (!now().isBefore(activity.getEndTime()) || activity.getStatus() == ActivityStatus.CANCELLED) return List.of();
         return locationViews(locations.findByActivityIdAndExpiresAtAfterOrderByUpdatedAtDesc(activityId, now()));
     }
     @Transactional
@@ -94,7 +97,7 @@ public class RoomService {
         long started = System.nanoTime();
         try {
             activities.requireMember(activityId, userId);
-            Activity activity = activities.find(activityId);
+            Activity activity = activities.activeActivity(activityId);
             if (!now().isBefore(activity.getEndTime()))
                 throw DomainException.conflict("ACTIVITY_ENDED", "活动已结束，位置共享已停止");
             SharedLocation l = locations.findByActivityIdAndUserId(activityId,userId).orElseGet(SharedLocation::new);

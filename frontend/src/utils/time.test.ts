@@ -36,6 +36,7 @@ describe('time helpers', () => {
     expect(activityLife(activity, new Date('2026-08-31T18:00:01'))).toBe('closed')
     expect(activityLife(activity, new Date('2026-09-01T12:00:00'))).toBe('ongoing')
     expect(activityLife(activity, new Date('2026-09-03T18:00:00'))).toBe('ended')
+    expect(activityLife({ ...activity, status: 'CANCELLED' }, new Date('2026-08-25T12:00:00'))).toBe('cancelled')
   })
 
   it('活动状态边界与后端时间窗口一致', () => {

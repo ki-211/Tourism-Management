@@ -15,7 +15,7 @@
 - `POST /auth/register|login|refresh|logout`，`POST /auth/ws-ticket`
 - `GET|PATCH /users/me`，`PUT /users/me/password`，`POST /users/me/logout-all`，`DELETE /users/me`
 - `GET /users/me/sign-records`
-- `GET|POST /activities`，`GET /activities/{id}`
+- `GET|POST /activities`，`GET|PUT /activities/{id}`（负责人编辑），`POST /activities/{id}/cancel`（负责人取消，可带 `reason`）
 - `GET /activities/invitations/{code}`，`POST /activities/{id}/invitation-code/rotate`
 - `POST /activities/{id}/signups`，`GET /activities/{id}/signups`，`POST /activities/{id}/transfer`
 - `GET|POST /activities/{id}/messages`（默认返回最新 `limit` 条，升序；`beforeId` 向前翻页；`afterId` 增量拉取更新的消息）
@@ -28,6 +28,6 @@
 - `GET /geocoding/search`，`GET /geocoding/reverse`
 - `GET /media/public/{id}`（仅活动封面），`GET /media/access/{id}?token=...`（5 分钟签名地址）；两者均支持 `variant=thumb` 返回缩略图，接口中的 `thumbnailUrl`、`coverThumbnailUrl`、`photoThumbnailUrl` 已带该参数
 
-图片上传字段名固定为 `file`。聊天最多 1000 字；用户名为 3–16 位字母、数字或下划线；密码 8–64 位。活动时间必须满足 `报名开始 ≤ 报名结束 ≤ 活动开始 < 活动结束`。
+图片上传字段名固定为 `file`。聊天最多 1000 字；用户名为 3–16 位字母、数字或下划线；密码 8–64 位。活动时间必须满足 `报名开始 ≤ 报名结束 ≤ 活动开始 < 活动结束`。`capacity` 为人数上限（含负责人，2–10000，`null` 不限），满员报名返回 409 `ACTIVITY_FULL`，编辑时不能低于当前人数。活动取消后（`status=CANCELLED`）不再出现在发现页，报名、聊天、相册上传、位置共享、签到、车辆等写操作均返回 409 `ACTIVITY_CANCELLED`，成员仍可查看与退出。
 
 WebSocket 使用原生 JSON。连接后发送 `{"type":"SUBSCRIBE_ACTIVITY","activityId":1}` 订阅活动，服务端推送事件对象；发送 `{"type":"PING"}` 会收到 `PONG`。事件在数据库事务提交后才推送。非成员订阅、退出活动、修改密码、全端下线或注销账号时，服务端以关闭码 `4403` 断开连接，客户端收到后不应重连。

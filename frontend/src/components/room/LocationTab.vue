@@ -9,10 +9,10 @@
             <view class="sharing-copy"><text class="section-title">{{ statusTitle }}</text><text class="muted">{{ statusDescription }}</text></view>
             <view class="status-dot"></view>
           </view>
-          <button v-if="!sharingThisActivity" class="primary-btn" :loading="sharingStore.status === 'starting'" :disabled="sharingStore.status === 'starting'" @click="startSharing">开启位置共享</button>
+          <button v-if="!sharingThisActivity && !readonly" class="primary-btn" :loading="sharingStore.status === 'starting'" :disabled="sharingStore.status === 'starting'" @click="startSharing">开启位置共享</button>
           <button v-else class="danger-btn" :loading="sharingStore.status === 'stopping'" :disabled="sharingStore.status === 'stopping'" @click="stopSharing">停止共享</button>
           <button v-if="sharingStore.canOpenSettings" class="secondary-btn" @click="sharingStore.openSettings">打开定位设置</button>
-          <button v-if="!sharingThisActivity || sharingStore.status === 'error'" class="secondary-btn" @click="manual = true">搜索或共享固定位置</button>
+          <button v-if="!readonly && (!sharingThisActivity || sharingStore.status === 'error')" class="secondary-btn" @click="manual = true">搜索或共享固定位置</button>
         </view>
 
         <view v-if="!mapConfigured" class="config-warning">
@@ -68,7 +68,7 @@ import { applyLocationEvent, validCoordinates } from '@/utils/location'
 import { displayTime } from '@/utils/time'
 
 type Place = { address?: string; latitude: number; longitude: number }
-const props = defineProps<{ activityId: number; activityEndTime: string; refreshKey: number; roomEvent?: any }>()
+const props = defineProps<{ activityId: number; activityEndTime: string; refreshKey: number; roomEvent?: any; readonly?: boolean }>()
 const sharingStore = useLocationSharingStore()
 const me = currentUser()
 const locations = ref<Location[]>([])

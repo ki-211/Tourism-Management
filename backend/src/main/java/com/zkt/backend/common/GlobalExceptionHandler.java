@@ -3,6 +3,7 @@ package com.zkt.backend.common;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -32,6 +33,12 @@ public class GlobalExceptionHandler {
     ResponseEntity<ApiResponse<Void>> conflict(DataIntegrityViolationException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ApiResponse.error("DATA_CONFLICT", "数据已存在或状态已发生变化"));
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    ResponseEntity<ApiResponse<Void>> concurrentUpdate(ObjectOptimisticLockingFailureException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error("CONCURRENT_UPDATE", "数据已被他人修改，请刷新后重试"));
     }
 
     @ExceptionHandler(AccessDeniedException.class)

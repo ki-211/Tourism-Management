@@ -44,6 +44,14 @@ public class ActivityController {
         service.leave(p.id(), id);
         return ApiResponse.ok("已退出活动", null);
     }
+    @PutMapping("/{id}") ApiResponse<ActivityService.ActivityView> update(@AuthenticationPrincipal UserPrincipal p, @PathVariable Long id,
+            @Valid @RequestBody ActivityRequest r) {
+        return ApiResponse.ok("活动已更新", service.update(p.id(), id, r.command()));
+    }
+    @PostMapping("/{id}/cancel") ApiResponse<ActivityService.ActivityView> cancel(@AuthenticationPrincipal UserPrincipal p, @PathVariable Long id,
+            @Valid @RequestBody(required = false) CancelRequest r) {
+        return ApiResponse.ok("活动已取消", service.cancel(p.id(), id, r == null ? null : r.reason()));
+    }
     @PostMapping("/{id}/transfer") ApiResponse<ActivityService.ActivityView> transfer(@AuthenticationPrincipal UserPrincipal p,
             @PathVariable Long id, @Valid @RequestBody TransferRequest r) {
         return ApiResponse.ok("活动负责人已转让", service.transfer(p.id(), id, r.newCreatorId()));
@@ -62,10 +70,12 @@ public class ActivityController {
             @NotBlank @Size(max = 200) String location,
             @NotNull @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
             @NotNull LocalDateTime endTime, @NotNull LocalDateTime signupStart, @NotNull LocalDateTime signupEnd,
-            @NotNull ActivityVisibility visibility, @Size(max = 500) String feeRule) {
-        ActivityService.CreateCommand command() { return new ActivityService.CreateCommand(title, description, location, startTime, endTime, signupStart, signupEnd, visibility, feeRule); }
+            @NotNull ActivityVisibility visibility, @Size(max = 500) String feeRule,
+            @Min(value = 2, message = "人数上限至少为 2（含负责人）") @Max(10000) Integer capacity) {
+        ActivityService.CreateCommand command() { return new ActivityService.CreateCommand(title, description, location, startTime, endTime, signupStart, signupEnd, visibility, feeRule, capacity); }
     }
     public record JoinRequest(@Size(max = 10) String invitationCode, @Size(max = 30) String grade,
                               @Min(1) @Max(20) Integer passengerCount, @Size(max = 500) String remark) {}
     public record TransferRequest(@NotNull Long newCreatorId) {}
+    public record CancelRequest(@Size(max = 200) String reason) {}
 }

@@ -20,9 +20,10 @@ export const displayTimeRange = (start?: string, end?: string, now = new Date())
 export const apiTime = (value: string) => value.length === 16 ? value + ':00' : value
 export const isSignupOpen = (start: string, end: string, now = new Date()) => now >= new Date(start) && now <= new Date(end)
 
-export type ActivityLife = 'upcoming' | 'signup' | 'closed' | 'ongoing' | 'ended'
+export type ActivityLife = 'upcoming' | 'signup' | 'closed' | 'ongoing' | 'ended' | 'cancelled'
 
-export const activityLife = (activity: { signupStart: string; signupEnd: string; startTime: string; endTime: string }, now = new Date()): ActivityLife => {
+export const activityLife = (activity: { signupStart: string; signupEnd: string; startTime: string; endTime: string; status?: string }, now = new Date()): ActivityLife => {
+  if (activity.status === 'CANCELLED') return 'cancelled'
   const end = parseTime(activity.endTime)
   const start = parseTime(activity.startTime)
   const signupStart = parseTime(activity.signupStart)
@@ -39,7 +40,8 @@ export const activityLifeLabel: Record<ActivityLife, string> = {
   signup: '报名中',
   closed: '报名已截止',
   ongoing: '进行中',
-  ended: '已结束'
+  ended: '已结束',
+  cancelled: '已取消'
 }
 
 function parseTime(value?: string) {

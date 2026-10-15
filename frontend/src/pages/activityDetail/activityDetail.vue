@@ -9,10 +9,12 @@
       <text class="life-tag" :class="life">{{ lifeLabel }}</text>
     </view>
     <view class="card overview">
+      <view v-if="cancelled" class="cancel-notice"><text class="notice-label">活动已取消</text><text>{{ activity.cancelReason || '发起人已取消本次活动，活动空间仅供查看。' }}</text></view>
       <view class="row-between heading"><view class="page-title">{{ activity.title }}</view><text v-if="activity.joined" class="tag">{{ activity.creator ? '我负责' : '已参与' }}</text></view>
       <view class="info-line"><text class="info-icon">⌖</text><text class="info-value">{{ activity.location }}</text></view>
       <view class="info-line"><text class="info-icon">◷</text><text class="info-value">{{ timeText }}</text></view>
       <view class="info-line"><text class="info-icon">◇</text><text class="info-value">由 {{ activity.creatorName }} 发起</text></view>
+      <view class="info-line"><text class="info-icon">◎</text><text class="info-value">{{ membersText }}</text></view>
       <view v-if="activity.feeRule" class="notice"><text class="notice-label">费用说明</text><text>{{ activity.feeRule }}</text></view>
       <view class="description-block"><text class="section-title">活动介绍</text><text class="body-text">{{ activity.description || '发起人暂未填写活动说明。' }}</text></view>
       <view v-if="activity.creator && activity.invitationCode" class="invite">
@@ -22,20 +24,23 @@
     </view>
       </view>
       <view class="detail-side">
-    <view v-if="!activity.joined" class="card form-card">
+    <view v-if="!activity.joined && cancelled" class="card"><text class="muted">该活动已取消，无法报名。</text></view>
+    <view v-else-if="!activity.joined" class="card form-card">
       <view class="section-title">填写报名信息</view><text class="muted form-intro">补充信息，方便发起人更好地安排活动。</text>
       <view class="field"><text class="field-label">身份或部门（选填）</text><input v-model="join.grade" class="input" placeholder="例如：摄影组" /></view>
       <view class="field"><text class="field-label">随行人数（选填）</text><input v-model.number="join.passengerCount" class="input" type="number" placeholder="请输入人数" /></view>
       <view class="field"><text class="field-label">备注（选填）</text><textarea v-model="join.remark" class="textarea" placeholder="饮食偏好、特殊需求等" /></view>
-      <button class="primary-btn" :loading="busy" :disabled="busy" @click="signup">提交报名</button>
+      <button class="primary-btn" :loading="busy" :disabled="busy || full" @click="signup">{{ full ? '名额已满' : '提交报名' }}</button>
     </view>
     <view v-else class="card actions">
       <button class="primary-btn" @click="room">进入活动空间</button>
       <view class="action-grid">
         <button class="secondary-btn" @click="vehicles">车辆信息</button>
         <button v-if="activity.creator" class="secondary-btn" @click="members">参与者名单</button>
-        <button v-if="activity.creator" class="secondary-btn" @click="retryCover">{{ activity.coverUrl ? '更新封面' : '补传封面' }}</button>
+        <button v-if="activity.creator && editable" class="secondary-btn" @click="retryCover">{{ activity.coverUrl ? '更新封面' : '补传封面' }}</button>
+        <button v-if="activity.creator && editable" class="secondary-btn" @click="edit">编辑活动</button>
       </view>
+      <button v-if="activity.creator && editable" class="leave-btn" :loading="busy" :disabled="busy" @click="cancelActivity">取消活动</button>
       <button v-if="!activity.creator" class="leave-btn" :loading="busy" :disabled="busy" @click="leaveActivity">退出活动</button>
     </view>
       </view>
@@ -63,6 +68,15 @@ const join = reactive<any>({ grade: '', passengerCount: undefined, remark: '', i
 const now = useCurrentTime()
 const life = computed(() => activity.value ? activityLife(activity.value, now.value) : 'upcoming')
 const lifeLabel = computed(() => activityLifeLabel[life.value])
+const cancelled = computed(() => activity.value?.status === 'CANCELLED')
+// Mirrors the server: cancelled or finished activities can no longer be edited or cancelled.
+const editable = computed(() => !!activity.value && !cancelled.value && life.value !== 'ended')
+const full = computed(() => !!activity.value?.capacity && activity.value.memberCount >= activity.value.capacity)
+const membersText = computed(() => {
+  if (!activity.value) return ''
+  const { memberCount, capacity } = activity.value
+  return capacity ? `已报名 ${memberCount} / ${capacity} 人（含负责人）` : `已报名 ${memberCount} 人，不限人数`
+})
 const timeText = computed(() => activity.value ? displayTimeRange(activity.value.startTime, activity.value.endTime, now.value) : '')
 onLoad((options: any) => {
   id.value = Number(options.id)
@@ -111,6 +125,27 @@ async function leaveActivity() {
     setTimeout(() => uni.switchTab({ url: '/pages/home/home' }), 500)
   } finally { busy.value = false }
 }
+async function cancelActivity() {
+  if (busy.value) return
+  const answer = await new Promise<{ confirm: boolean; content?: string }>(resolve => uni.showModal({
+    title: '取消活动',
+    content: '',
+    editable: true,
+    placeholderText: '取消原因（选填，将通知所有成员）',
+    confirmText: '确认取消',
+    confirmColor: '#DC4C4C',
+    success: result => resolve(result as any),
+    fail: () => resolve({ confirm: false })
+  }))
+  if (!answer.confirm) return
+  busy.value = true
+  try {
+    activity.value = await api(`/activities/${id.value}/cancel`, 'POST', { reason: (answer.content || '').trim() })
+    if (locationSharing.activityId === id.value && locationSharing.sharing) await locationSharing.stop(true).catch(() => undefined)
+    uni.showToast({ title: '活动已取消' })
+  } finally { busy.value = false }
+}
+const edit = () => uni.navigateTo({ url: `/pages/activityCreate/activityCreate?id=${id.value}` })
 function retryCover() {
   uni.chooseImage({ count: 1, sizeType: ['compressed'], success: async result => {
     activity.value = await upload(`/activities/${id.value}/cover`, result.tempFilePaths[0])
@@ -136,6 +171,9 @@ const members = () => uni.navigateTo({ url: `/pages/signupList/signupList?id=${i
 .life-tag.ongoing { background: $success; }
 .life-tag.closed { background: $warning; }
 .life-tag.ended { background: rgba(23, 35, 33, .45); }
+.life-tag.cancelled { background: $danger; }
+.cancel-notice { display: flex; align-items: flex-start; margin-bottom: 22rpx; padding: 20rpx; color: $text-secondary; font-size: 25rpx; line-height: 1.6; background: #fff0f0; border-radius: 18rpx; gap: 18rpx; }
+.cancel-notice .notice-label { color: $danger; }
 .overview { overflow: visible; }
 .heading { align-items: flex-start; margin-bottom: 22rpx; }
 .notice { display: flex; align-items: flex-start; margin-top: 24rpx; padding: 20rpx; color: $text-secondary; font-size: 25rpx; line-height: 1.6; background: $accent-soft; border-radius: 18rpx; gap: 18rpx; }

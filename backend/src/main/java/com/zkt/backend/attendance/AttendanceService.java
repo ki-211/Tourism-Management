@@ -36,7 +36,7 @@ public class AttendanceService {
 
     @Transactional
     public TaskView createTask(Long userId, Long activityId, String title, String description) {
-        activities.creatorActivity(userId, activityId);
+        activities.requireActive(activities.creatorActivity(userId, activityId));
         SignTask t = new SignTask();
         t.setActivityId(activityId); t.setTitle(title.trim()); t.setDescription(description); t.setCreatedBy(userId);
         TaskView v = taskViews(List.of(tasks.save(t)), userId).get(0);
@@ -64,6 +64,7 @@ public class AttendanceService {
     public RecordView sign(Long userId, Long taskId, BigDecimal lat, BigDecimal lon, String address, String remark, MultipartFile photo) {
         SignTask t = findTask(taskId);
         activities.requireMember(t.getActivityId(), userId);
+        activities.activeActivity(t.getActivityId());
         if (records.existsByTaskIdAndUserId(taskId, userId)) throw DomainException.conflict("ALREADY_SIGNED", "已经签到过了");
         SignRecord r = new SignRecord();
         r.setTaskId(taskId); r.setUserId(userId); r.setLatitude(lat); r.setLongitude(lon); r.setAddress(address); r.setRemark(remark);
