@@ -34,16 +34,19 @@ public class AuthService {
     private final RoomEventPublisher events;
     private final AuthenticatedUserCache userCache;
     private final TransactionTemplate transactions;
+    private final LoginAttemptService loginAttempts;
     private final SecureRandom random = new SecureRandom();
 
     public AuthService(UserRepository users, RefreshTokenRepository refreshTokens, PasswordEncoder encoder,
                        JwtService jwt, AppSecurityProperties properties, Clock clock, ActivityRepository activities,
                        SignupRepository signups, SharedLocationRepository locations, RoomEventPublisher events,
-                       AuthenticatedUserCache userCache, TransactionTemplate transactions) {
+                       AuthenticatedUserCache userCache, TransactionTemplate transactions,
+                       LoginAttemptService loginAttempts) {
         this.users = users; this.refreshTokens = refreshTokens; this.encoder = encoder; this.jwt = jwt; this.properties = properties;
         this.clock = clock;
         this.activities = activities; this.signups = signups; this.locations = locations; this.events = events; this.userCache = userCache;
         this.transactions = transactions;
+        this.loginAttempts = loginAttempts;
     }
 
     @Transactional
@@ -56,10 +59,13 @@ public class AuthService {
 
     @Transactional
     public Tokens login(String username, String password) {
-        User user = users.findByUsername(username)
-                .orElseThrow(() -> new DomainException(HttpStatus.UNAUTHORIZED, "BAD_CREDENTIALS", "用户名或密码错误"));
-        if (!encoder.matches(password, user.getPasswordHash()))
+        loginAttempts.requireNotLocked(username);
+        User user = users.findByUsername(username).orElse(null);
+        if (user == null || !encoder.matches(password, user.getPasswordHash())) {
+            loginAttempts.recordFailure(username);
             throw new DomainException(HttpStatus.UNAUTHORIZED, "BAD_CREDENTIALS", "用户名或密码错误");
+        }
+        loginAttempts.reset(username);
         return issue(user);
     }
 

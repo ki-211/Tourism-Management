@@ -41,6 +41,9 @@ app:
   realtime:
     mode: ${REALTIME_MODE:local}
     channel: ${REALTIME_CHANNEL:tourism:room-events}
+  login:
+    max-failures: ${LOGIN_MAX_FAILURES:10}
+    lock-duration: ${LOGIN_LOCK_DURATION:PT15M}
   rate-limit:
     enabled: ${RATE_LIMIT_ENABLED:true}
     auth-per-minute: ${AUTH_RATE_LIMIT:60}
