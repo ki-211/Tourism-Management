@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
     List<ChatMessage> findByActivityIdAndIdGreaterThanOrderByIdAsc(Long activityId, Long afterId, Pageable pageable);
+    List<ChatMessage> findByActivityIdAndIdLessThanOrderByIdDesc(Long activityId, Long beforeId, Pageable pageable);
 }

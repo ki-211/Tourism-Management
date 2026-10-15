@@ -37,10 +37,14 @@ public class RoomService {
         this.clock=clock;
     }
     @Transactional(readOnly = true)
-    public List<MessageView> messages(Long userId, Long activityId, long afterId, int limit) {
+    public List<MessageView> messages(Long userId, Long activityId, long afterId, Long beforeId, int limit) {
         activities.requireMember(activityId, userId);
-        return messages.findByActivityIdAndIdGreaterThanOrderByIdAsc(activityId, Math.max(0, afterId), PageRequest.of(0, Math.min(Math.max(limit,1),100)))
-                .stream().map(this::messageView).toList();
+        PageRequest page = PageRequest.of(0, Math.min(Math.max(limit,1),100));
+        // afterId > 0: incremental catch-up in ascending order; otherwise the newest page before beforeId.
+        List<ChatMessage> found = afterId > 0
+                ? messages.findByActivityIdAndIdGreaterThanOrderByIdAsc(activityId, afterId, page)
+                : messages.findByActivityIdAndIdLessThanOrderByIdDesc(activityId, beforeId == null ? Long.MAX_VALUE : beforeId, page).reversed();
+        return found.stream().map(this::messageView).toList();
     }
     @Transactional
     public MessageView send(Long userId, Long activityId, String content) {

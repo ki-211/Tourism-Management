@@ -14,7 +14,7 @@ import java.util.List;
 @RequestMapping("/api/v1/activities/{activityId}")
 public class RoomController {
     private final RoomService service; public RoomController(RoomService service){this.service=service;}
-    @GetMapping("/messages") ApiResponse<List<RoomService.MessageView>> messages(@AuthenticationPrincipal UserPrincipal p,@PathVariable Long activityId,@RequestParam(defaultValue="0") long afterId,@RequestParam(defaultValue="50") int limit){return ApiResponse.ok(service.messages(p.id(),activityId,afterId,limit));}
+    @GetMapping("/messages") ApiResponse<List<RoomService.MessageView>> messages(@AuthenticationPrincipal UserPrincipal p,@PathVariable Long activityId,@RequestParam(defaultValue="0") long afterId,@RequestParam(required=false) Long beforeId,@RequestParam(defaultValue="50") int limit){return ApiResponse.ok(service.messages(p.id(),activityId,afterId,beforeId,limit));}
     @PostMapping("/messages") ApiResponse<RoomService.MessageView> send(@AuthenticationPrincipal UserPrincipal p,@PathVariable Long activityId,@Valid @RequestBody MessageRequest r){return ApiResponse.ok(service.send(p.id(),activityId,r.content()));}
     @GetMapping("/photos") ApiResponse<List<RoomService.PhotoView>> photos(@AuthenticationPrincipal UserPrincipal p,@PathVariable Long activityId){return ApiResponse.ok(service.photos(p.id(),activityId));}
     @PostMapping(value="/photos",consumes="multipart/form-data") ApiResponse<RoomService.PhotoView> upload(@AuthenticationPrincipal UserPrincipal p,@PathVariable Long activityId,@RequestPart MultipartFile file){return ApiResponse.ok("上传成功",service.uploadPhoto(p.id(),activityId,file));}

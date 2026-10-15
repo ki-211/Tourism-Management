@@ -4,6 +4,7 @@ import com.zkt.backend.common.DomainException;
 import com.zkt.backend.activity.ActivityRepository;
 import com.zkt.backend.activity.SignupRepository;
 import com.zkt.backend.location.SharedLocationRepository;
+import com.zkt.backend.room.RoomEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,14 +29,15 @@ public class AuthService {
     private final ActivityRepository activities;
     private final SignupRepository signups;
     private final SharedLocationRepository locations;
+    private final RoomEventPublisher events;
     private final SecureRandom random = new SecureRandom();
 
     public AuthService(UserRepository users, RefreshTokenRepository refreshTokens, PasswordEncoder encoder,
                        JwtService jwt, AppSecurityProperties properties, Clock clock, ActivityRepository activities,
-                       SignupRepository signups, SharedLocationRepository locations) {
+                       SignupRepository signups, SharedLocationRepository locations, RoomEventPublisher events) {
         this.users = users; this.refreshTokens = refreshTokens; this.encoder = encoder; this.jwt = jwt; this.properties = properties;
         this.clock = clock;
-        this.activities = activities; this.signups = signups; this.locations = locations;
+        this.activities = activities; this.signups = signups; this.locations = locations; this.events = events;
     }
 
     @Transactional
@@ -103,6 +105,7 @@ public class AuthService {
         user.setRole("DELETED");
         user.setDeletedAt(now());
         user.setTokenVersion(user.getTokenVersion() + 1);
+        events.disconnect(userId, null);
     }
 
     private User activeUser(Long userId) {
@@ -114,6 +117,7 @@ public class AuthService {
     private void revokeSessions(User user) {
         refreshTokens.deleteByUserId(user.getId());
         user.setTokenVersion(user.getTokenVersion() + 1);
+        events.disconnect(user.getId(), null);
     }
 
     private Tokens issue(User user) {

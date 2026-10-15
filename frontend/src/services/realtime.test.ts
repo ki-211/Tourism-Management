@@ -55,4 +55,21 @@ describe('activity socket reconnect', () => {
     }))
     activitySocket.close()
   })
+
+  it('stops reconnecting and reports revocation when the server closes with 4403', async () => {
+    const task = socketTask()
+    const connectSocket = vi.fn().mockReturnValue(task)
+    vi.stubGlobal('uni', { connectSocket })
+    const events: any[] = []
+    const activitySocket = new ActivitySocket(12)
+    activitySocket.on(event => events.push(event))
+
+    await activitySocket.connect()
+    task.handlers.open()
+    task.handlers.close({ code: 4403, reason: 'ACCESS_REVOKED' })
+    await vi.advanceTimersByTimeAsync(60000)
+
+    expect(connectSocket).toHaveBeenCalledTimes(1)
+    expect(events).toEqual([{ type: 'ACCESS_REVOKED', activityId: 12 }])
+  })
 })

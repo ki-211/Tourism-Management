@@ -1,6 +1,7 @@
 import { api, API_BASE } from './api'
 
 type Listener = (event: any) => void
+const ACCESS_REVOKED = 4403
 
 export class ActivitySocket {
   private socket: UniApp.SocketTask | null = null
@@ -38,7 +39,8 @@ export class ActivitySocket {
         return
       }
     })
-    this.socket.onClose(() => this.reconnect())
+    // 4403: the server revoked access (left the activity, password change, logout-all); retrying cannot succeed.
+    this.socket.onClose(result => (result?.code === ACCESS_REVOKED ? this.revoke() : this.reconnect()))
     this.socket.onError(() => this.reconnect())
   }
 
@@ -49,6 +51,12 @@ export class ActivitySocket {
       this.reconnectTimer = null
       this.connect().catch(() => this.reconnect())
     }, delay)
+  }
+
+  private revoke() {
+    const listeners = [...this.listeners]
+    this.close()
+    listeners.forEach(listener => listener({ type: 'ACCESS_REVOKED', activityId: this.activityId }))
   }
 
   close() {

@@ -80,6 +80,7 @@ public class ActivityService {
         MemberLeft payload = new MemberLeft(userId);
         events.publish(activityId, "LOCATION_REMOVED", payload);
         events.publish(activityId, "MEMBER_LEFT", payload);
+        events.disconnect(userId, activityId);
     }
 
     @Transactional

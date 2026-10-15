@@ -18,7 +18,7 @@
 - `GET|POST /activities`，`GET /activities/{id}`
 - `GET /activities/invitations/{code}`，`POST /activities/{id}/invitation-code/rotate`
 - `POST /activities/{id}/signups`，`GET /activities/{id}/signups`，`POST /activities/{id}/transfer`
-- `GET|POST /activities/{id}/messages`
+- `GET|POST /activities/{id}/messages`（默认返回最新 `limit` 条，升序；`beforeId` 向前翻页；`afterId` 增量拉取更新的消息）
 - `GET|POST /activities/{id}/photos`，`DELETE /activities/{id}/photos/{photoId}`
 - `GET /activities/{id}/locations`，`PUT|DELETE /activities/{id}/locations/me`
 - `GET|POST /activities/{id}/vehicles`
@@ -30,4 +30,4 @@
 
 图片上传字段名固定为 `file`。聊天最多 1000 字；用户名为 3–16 位字母、数字或下划线；密码 8–64 位。活动时间必须满足 `报名开始 ≤ 报名结束 ≤ 活动开始 < 活动结束`。
 
-WebSocket 使用原生 JSON。连接后发送 `{"type":"SUBSCRIBE_ACTIVITY","activityId":1}` 订阅活动，服务端推送事件对象；发送 `{"type":"PING"}` 会收到 `PONG`。
+WebSocket 使用原生 JSON。连接后发送 `{"type":"SUBSCRIBE_ACTIVITY","activityId":1}` 订阅活动，服务端推送事件对象；发送 `{"type":"PING"}` 会收到 `PONG`。事件在数据库事务提交后才推送。非成员订阅、退出活动、修改密码、全端下线或注销账号时，服务端以关闭码 `4403` 断开连接，客户端收到后不应重连。

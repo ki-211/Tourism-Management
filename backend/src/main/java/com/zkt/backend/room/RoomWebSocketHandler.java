@@ -15,15 +15,17 @@ public class RoomWebSocketHandler extends TextWebSocketHandler {
     public RoomWebSocketHandler(ObjectMapper mapper, ActivityService activities, RoomEventPublisher events) {
         this.mapper = mapper; this.activities = activities; this.events = events;
     }
+    @Override public void afterConnectionEstablished(WebSocketSession session) { events.register(session); }
     @Override protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         JsonNode body = mapper.readTree(message.getPayload()); String type = body.path("type").asText();
-        if ("PING".equals(type)) { session.sendMessage(new TextMessage("{\"type\":\"PONG\"}")); return; }
+        if ("PING".equals(type)) { events.reply(session, "{\"type\":\"PONG\"}"); return; }
         if ("SUBSCRIBE_ACTIVITY".equals(type)) {
             Long userId = (Long) session.getAttributes().get("userId"); long activityId = body.path("activityId").asLong();
-            activities.requireMember(activityId, userId); events.subscribe(activityId, session);
-            session.sendMessage(new TextMessage("{\"type\":\"SUBSCRIBED\",\"activityId\":" + activityId + "}"));
+            if (!activities.isMember(activityId, userId)) { events.unregister(session); session.close(RoomEventPublisher.ACCESS_REVOKED); return; }
+            events.subscribe(activityId, session);
+            events.reply(session, "{\"type\":\"SUBSCRIBED\",\"activityId\":" + activityId + "}");
         }
     }
-    @Override public void afterConnectionClosed(WebSocketSession session, CloseStatus status) { events.unsubscribe(session); }
-    @Override public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception { events.unsubscribe(session); session.close(); }
+    @Override public void afterConnectionClosed(WebSocketSession session, CloseStatus status) { events.unregister(session); }
+    @Override public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception { events.unregister(session); session.close(); }
 }

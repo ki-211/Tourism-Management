@@ -50,7 +50,11 @@ async function loadActivity() {
     if (!socket) {
       socket = new ActivitySocket(id.value)
       socket.on(event => {
-        if (event?.type === 'LOCATION_UPDATED' || event?.type === 'LOCATION_REMOVED') roomEvent.value = event
+        if (event?.type === 'ACCESS_REVOKED') {
+          socket = null
+          uni.showToast({ title: '已无权访问该活动空间', icon: 'none' })
+          uni.navigateBack()
+        } else if (event?.type === 'LOCATION_UPDATED' || event?.type === 'LOCATION_REMOVED') roomEvent.value = event
         else refreshKey.value++
       })
       await socket.connect()

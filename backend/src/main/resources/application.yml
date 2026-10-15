@@ -31,7 +31,10 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
-  forward-headers-strategy: framework
+  # Tomcat RemoteIpValve reads X-Forwarded-For right-to-left and skips only trusted proxies (private and
+  # loopback ranges by default; override with SERVER_TOMCAT_REMOTEIP_INTERNALPROXIES), so a client-supplied
+  # X-Forwarded-For cannot spoof the address used for rate limiting.
+  forward-headers-strategy: native
 
 app:
   time-zone: ${APP_TIME_ZONE:Asia/Shanghai}

@@ -157,6 +157,30 @@ class CoreFlowIntegrationTest {
                 .andExpect(status().isOk());
     }
 
+    @Test void chatHistoryReturnsNewestPageAndPagesBackwards() throws Exception {
+        register("chat_owner");
+        String token = login("chat_owner").path("data").path("accessToken").asText();
+        LocalDateTime now = LocalDateTime.now().withNano(0);
+        long activityId = createActivity(token, "聊天分页", now.minusMinutes(1), now.plusDays(1), now.plusDays(2), now.plusDays(3));
+        for (int i = 1; i <= 5; i++)
+            mvc.perform(post("/api/v1/activities/{id}/messages", activityId).header("Authorization", bearer(token))
+                    .contentType(MediaType.APPLICATION_JSON).content(json(Map.of("content", "m" + i)))).andExpect(status().isOk());
+
+        JsonNode newest = body(mvc.perform(get("/api/v1/activities/{id}/messages", activityId).param("limit", "2")
+                .header("Authorization", bearer(token))).andExpect(status().isOk()).andReturn()).path("data");
+        assertThat(newest.findValuesAsText("content")).containsExactly("m4", "m5");
+
+        JsonNode earlier = body(mvc.perform(get("/api/v1/activities/{id}/messages", activityId).param("limit", "2")
+                .param("beforeId", newest.get(0).path("id").asText())
+                .header("Authorization", bearer(token))).andExpect(status().isOk()).andReturn()).path("data");
+        assertThat(earlier.findValuesAsText("content")).containsExactly("m2", "m3");
+
+        JsonNode after = body(mvc.perform(get("/api/v1/activities/{id}/messages", activityId).param("limit", "10")
+                .param("afterId", earlier.get(1).path("id").asText())
+                .header("Authorization", bearer(token))).andExpect(status().isOk()).andReturn()).path("data");
+        assertThat(after.findValuesAsText("content")).containsExactly("m4", "m5");
+    }
+
     @Test void locationSharingEnforcesMembershipExpiryAndActivityEnd() throws Exception {
         register("location_owner"); register("location_member"); register("location_guest");
         JsonNode ownerLogin = login("location_owner"), memberLogin = login("location_member"), outsiderLogin = login("location_guest");
