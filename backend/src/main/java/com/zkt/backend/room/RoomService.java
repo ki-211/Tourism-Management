@@ -133,8 +133,11 @@ public class RoomService {
         Map<Long, MediaAsset> assetsById = list.isEmpty() ? Map.of()
                 : assets.findAllById(list.stream().map(ActivityPhoto::getMediaId).toList()).stream().collect(Collectors.toMap(MediaAsset::getId, Function.identity()));
         boolean creator = activity.getCreatorId().equals(viewerId);
-        return list.stream().map(p -> new PhotoView(p.getId(), media.view(assetsById.get(p.getMediaId()), viewerId).url(), p.getUploaderId(),
-                byId.get(p.getUploaderId()).getNickname(), p.getCreatedAt(), creator || p.getUploaderId().equals(viewerId))).toList();
+        return list.stream().map(p -> {
+            MediaService.MediaView image = media.view(assetsById.get(p.getMediaId()), viewerId);
+            return new PhotoView(p.getId(), image.url(), image.thumbnailUrl(), p.getUploaderId(),
+                    byId.get(p.getUploaderId()).getNickname(), p.getCreatedAt(), creator || p.getUploaderId().equals(viewerId));
+        }).toList();
     }
     private List<LocationView> locationViews(List<SharedLocation> list) {
         Map<Long, User> byId = usersById(list.stream().map(SharedLocation::getUserId).toList());
@@ -146,7 +149,7 @@ public class RoomService {
         return users.findAllById(new HashSet<>(ids)).stream().collect(Collectors.toMap(User::getId, Function.identity()));
     }
     public record MessageView(Long id,Long userId,String nickname,String content,LocalDateTime createdAt){}
-    public record PhotoView(Long id,String url,Long uploaderId,String uploaderName,LocalDateTime createdAt,boolean deletable){}
+    public record PhotoView(Long id,String url,String thumbnailUrl,Long uploaderId,String uploaderName,LocalDateTime createdAt,boolean deletable){}
     public record PhotoAdded(Long photoId){}
     public record PhotoRemoved(Long photoId){}
     public record LocationView(Long userId,String nickname,BigDecimal latitude,BigDecimal longitude,String address,LocalDateTime updatedAt,LocalDateTime expiresAt){}

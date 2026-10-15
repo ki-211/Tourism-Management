@@ -26,7 +26,7 @@
 - `POST /sign-tasks/{id}/records`（JSON 无照片或 multipart 带照片）
 - `GET /sign-tasks/{id}/summary`，`GET /sign-tasks/unsigned`
 - `GET /geocoding/search`，`GET /geocoding/reverse`
-- `GET /media/public/{id}`（仅活动封面），`GET /media/access/{id}?token=...`（5 分钟签名地址）
+- `GET /media/public/{id}`（仅活动封面），`GET /media/access/{id}?token=...`（5 分钟签名地址）；两者均支持 `variant=thumb` 返回缩略图，接口中的 `thumbnailUrl`、`coverThumbnailUrl`、`photoThumbnailUrl` 已带该参数
 
 图片上传字段名固定为 `file`。聊天最多 1000 字；用户名为 3–16 位字母、数字或下划线；密码 8–64 位。活动时间必须满足 `报名开始 ≤ 报名结束 ≤ 活动开始 < 活动结束`。
 

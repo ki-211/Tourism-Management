@@ -16,6 +16,7 @@ public class MediaAsset {
     @Column(name = "content_type", nullable = false, length = 50) private String contentType;
     @Column(name = "size_bytes", nullable = false) private Long sizeBytes;
     @Column(nullable = false, length = 30) private String purpose;
+    @Column(name = "thumbnail_key") private String thumbnailKey;
     @Column(name = "created_at", nullable = false) private LocalDateTime createdAt;
     @PrePersist void create() { createdAt = LocalDateTime.now(); }
 }

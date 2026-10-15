@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { reuseSignedUrls } from './photos'
 
 const photo = (id: number, url: string, deletable = false) =>
-  ({ id, url, uploaderId: 1, uploaderName: 'a', createdAt: '2026-01-01T00:00:00', deletable })
+  ({ id, url, thumbnailUrl: `${url}&variant=thumb`, uploaderId: 1, uploaderName: 'a', createdAt: '2026-01-01T00:00:00', deletable })
 
 describe('reuseSignedUrls', () => {
   it('keeps known URLs, adopts new photos and fresh metadata, and drops removed photos', () => {

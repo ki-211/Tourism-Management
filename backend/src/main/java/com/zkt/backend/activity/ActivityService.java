@@ -173,11 +173,12 @@ public class ActivityService {
         Set<Long> joined = new HashSet<>(signups.findJoinedActivityIds(viewerId, list.stream().map(Activity::getId).toList()));
         return list.stream().map(a -> {
             MediaAsset coverAsset = a.getCoverMediaId() == null ? null : covers.get(a.getCoverMediaId());
-            String cover = coverAsset == null ? null : media.view(coverAsset, viewerId).url();
+            MediaService.MediaView cover = coverAsset == null ? null : media.view(coverAsset, viewerId);
             boolean creatorView = a.getCreatorId().equals(viewerId);
             return new ActivityView(a.getId(), a.getTitle(), a.getDescription(), a.getLocation(), a.getStartTime(), a.getEndTime(),
                     a.getSignupStart(), a.getSignupEnd(), a.getVisibility(), creatorView ? a.getInvitationCode() : null,
-                    a.getFeeRule(), a.getCreatorId(), creators.get(a.getCreatorId()).getNickname(), cover,
+                    a.getFeeRule(), a.getCreatorId(), creators.get(a.getCreatorId()).getNickname(),
+                    cover == null ? null : cover.url(), cover == null ? null : cover.thumbnailUrl(),
                     joined.contains(a.getId()), creatorView, a.getCreatedAt());
         }).toList();
     }
@@ -205,7 +206,8 @@ public class ActivityService {
     public record JoinCommand(String invitationCode, String grade, Integer passengerCount, String remark) {}
     public record ActivityView(Long id, String title, String description, String location, LocalDateTime startTime, LocalDateTime endTime,
                                LocalDateTime signupStart, LocalDateTime signupEnd, ActivityVisibility visibility, String invitationCode,
-                               String feeRule, Long creatorId, String creatorName, String coverUrl, boolean joined, boolean creator,
+                               String feeRule, Long creatorId, String creatorName, String coverUrl, String coverThumbnailUrl,
+                               boolean joined, boolean creator,
                                LocalDateTime createdAt) {}
     public record InvitationPreview(Long id, String title, String location, LocalDateTime startTime, LocalDateTime endTime, LocalDateTime signupEnd) {}
     public record MemberView(Long userId, String username, String nickname, String grade, Integer passengerCount, String remark, LocalDateTime joinedAt) {}

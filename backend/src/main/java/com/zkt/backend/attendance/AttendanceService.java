@@ -124,9 +124,9 @@ public class AttendanceService {
                 : assets.findAllById(photoIds).stream().collect(Collectors.toMap(MediaAsset::getId, Function.identity()));
         return list.stream().map(r -> {
             MediaAsset asset = r.getPhotoMediaId() == null ? null : photos.get(r.getPhotoMediaId());
-            String photo = asset == null ? null : media.view(asset, viewerId).url();
+            MediaService.MediaView photo = asset == null ? null : media.view(asset, viewerId);
             return new RecordView(r.getId(), r.getTaskId(), r.getUserId(), byId.get(r.getUserId()).getNickname(), r.getLatitude(), r.getLongitude(),
-                    r.getAddress(), r.getRemark(), photo, r.getSignedAt());
+                    r.getAddress(), r.getRemark(), photo == null ? null : photo.url(), photo == null ? null : photo.thumbnailUrl(), r.getSignedAt());
         }).toList();
     }
 
@@ -137,7 +137,7 @@ public class AttendanceService {
 
     public record TaskView(Long id, Long activityId, String title, String description, LocalDateTime createdAt, long signedCount, boolean signed) {}
     public record RecordView(Long id, Long taskId, Long userId, String nickname, BigDecimal latitude, BigDecimal longitude, String address,
-                             String remark, String photoUrl, LocalDateTime signedAt) {}
+                             String remark, String photoUrl, String photoThumbnailUrl, LocalDateTime signedAt) {}
     public record MemberStatus(Long userId, String nickname, boolean signed, RecordView record) {}
     public record TaskSummary(TaskView task, List<MemberStatus> members) {}
     public record SignRecordCreated(Long recordId, Long taskId, Long userId) {}

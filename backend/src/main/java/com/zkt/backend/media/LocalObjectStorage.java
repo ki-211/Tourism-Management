@@ -2,6 +2,7 @@ package com.zkt.backend.media;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -18,11 +19,10 @@ public class LocalObjectStorage implements ObjectStorage {
             Path target = root.resolve(key).normalize();
             if (!target.startsWith(root)) throw new IllegalArgumentException("非法对象路径");
             Files.createDirectories(target.getParent()); Files.write(target, content);
-            Files.writeString(root.resolve(key + ".type"), type);
         } catch (Exception e) { throw new IllegalStateException("图片保存失败", e); }
     }
-    @Override public StoredObject get(String key) {
-        try { return new StoredObject(Files.readAllBytes(root.resolve(key)), Files.readString(root.resolve(key + ".type"))); }
+    @Override public InputStream open(String key) {
+        try { return Files.newInputStream(root.resolve(key)); }
         catch (Exception e) { throw new IllegalStateException("图片读取失败", e); }
     }
     @Override public void delete(String key) {

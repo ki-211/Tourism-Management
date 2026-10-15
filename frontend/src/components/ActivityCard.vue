@@ -1,7 +1,7 @@
 <template>
   <view class="card activity" @click="$emit('open', activity.id)">
     <view class="cover-wrap">
-      <image v-if="activity.coverUrl" class="cover" :src="activity.coverUrl" mode="aspectFill" />
+      <image v-if="activity.coverUrl" class="cover" :src="activity.coverThumbnailUrl || activity.coverUrl" mode="aspectFill" />
       <view v-else class="cover placeholder-cover">
         <text class="placeholder-mark">行</text>
         <text>把期待装进行程</text>

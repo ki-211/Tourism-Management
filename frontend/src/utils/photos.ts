@@ -5,6 +5,9 @@ import type { Photo } from '@/services/types'
  * copy instead of downloading every photo again whenever the list is refetched.
  */
 export function reuseSignedUrls(previous: Photo[], fresh: Photo[]): Photo[] {
-  const known = new Map(previous.map(photo => [photo.id, photo.url]))
-  return fresh.map(photo => ({ ...photo, url: known.get(photo.id) ?? photo.url }))
+  const known = new Map(previous.map(photo => [photo.id, photo]))
+  return fresh.map(photo => {
+    const seen = known.get(photo.id)
+    return seen ? { ...photo, url: seen.url, thumbnailUrl: seen.thumbnailUrl } : photo
+  })
 }

@@ -4,6 +4,7 @@ import io.minio.*;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 
 @Component
 @ConditionalOnProperty(name = "app.storage.type", havingValue = "s3")
@@ -26,11 +27,9 @@ public class S3ObjectStorage implements ObjectStorage {
                 .stream(new ByteArrayInputStream(content), content.length, -1).build()); }
         catch (Exception e) { throw new IllegalStateException("图片保存失败", e); }
     }
-    @Override public StoredObject get(String key) {
-        try (var stream = client.getObject(GetObjectArgs.builder().bucket(bucket).object(key).build())) {
-            var stat = client.statObject(StatObjectArgs.builder().bucket(bucket).object(key).build());
-            return new StoredObject(stream.readAllBytes(), stat.contentType());
-        } catch (Exception e) { throw new IllegalStateException("图片读取失败", e); }
+    @Override public InputStream open(String key) {
+        try { return client.getObject(GetObjectArgs.builder().bucket(bucket).object(key).build()); }
+        catch (Exception e) { throw new IllegalStateException("图片读取失败", e); }
     }
     @Override public void delete(String key) {
         try { client.removeObject(RemoveObjectArgs.builder().bucket(bucket).object(key).build()); } catch (Exception ignored) {}

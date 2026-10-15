@@ -4,7 +4,7 @@
     <view v-if="uploading" class="upload-progress"><view class="progress-copy"><text>正在压缩并上传</text><text>{{ progress }}%</text></view><view class="progress-track"><view :style="{ width: `${progress}%` }"></view></view></view>
     <view v-if="loading" class="photo-grid"><view v-for="item in 6" :key="item" class="photo-skeleton"></view></view>
     <LoadError v-else-if="error" :message="error" @retry="load()" />
-    <view v-else class="photo-grid"><view v-for="(photo,index) in photos" :key="photo.id" class="photo-wrap"><image class="photo" :src="photo.url" mode="aspectFill" @click="preview(index)" /><button v-if="photo.deletable" class="photo-delete" @click.stop="remove(photo)">×</button></view></view>
+    <view v-else class="photo-grid"><view v-for="(photo,index) in photos" :key="photo.id" class="photo-wrap"><image class="photo" :src="photo.thumbnailUrl || photo.url" mode="aspectFill" @click="preview(index)" /><button v-if="photo.deletable" class="photo-delete" @click.stop="remove(photo)">×</button></view></view>
     <view v-if="!loading && !error && !photos.length" class="empty">暂无照片<br>上传第一张活动照片吧</view>
   </view>
 </template>
