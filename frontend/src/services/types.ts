@@ -4,5 +4,5 @@ export interface Activity{id:number;title:string;description?:string;location:st
 export interface Member{userId:number;username:string;nickname:string;grade?:string;passengerCount?:number;remark?:string;joinedAt:string}
 export interface Message{id:number;userId:number;nickname:string;content:string;createdAt:string} export interface Photo{id:number;url:string;thumbnailUrl?:string;uploaderId:number;uploaderName:string;createdAt:string;deletable:boolean}
 export interface Location{userId:number;nickname:string;latitude:number;longitude:number;address?:string;updatedAt:string;expiresAt:string}
-export interface SignTask{id:number;activityId:number;title:string;description?:string;createdAt:string;signedCount:number;signed:boolean}
+export interface SignTask{id:number;activityId:number;title:string;description?:string;createdAt:string;signedCount:number;signed:boolean;deadline?:string|null;closed:boolean;latitude?:number|null;longitude?:number|null;radiusMeters?:number|null;locationName?:string|null;photoRequired:boolean}
 export interface Vehicle{id:number;plateNumber:string;driverName:string;pickupTime:string;pickupLocation:string;createdAt:string}

@@ -18,6 +18,7 @@ public class SignRecord {
     @Column(length=500) private String address;
     @Column(length=200) private String remark;
     @Column(name="photo_media_id") private Long photoMediaId;
+    @Column(name="distance_meters") private Integer distanceMeters;
     @Column(name="signed_at",nullable=false) private LocalDateTime signedAt;
     @PrePersist void create(){signedAt=LocalDateTime.now();}
 }

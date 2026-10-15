@@ -24,6 +24,7 @@
 - `GET|POST /activities/{id}/vehicles`
 - `GET|POST /activities/{id}/sign-tasks`，`GET /sign-tasks/{id}`
 - `POST /sign-tasks/{id}/records`（JSON 无照片或 multipart 带照片）
+- 发布签到可选 `deadline`（截止时间）、`latitude`/`longitude`/`radiusMeters`（50–5000 米，三者须同时提供，GCJ-02）、`locationName`、`photoRequired`。签到时依次校验：截止后 409 `SIGN_CLOSED`；需拍照却无照片 400 `PHOTO_REQUIRED`；有范围却无坐标 400 `LOCATION_REQUIRED`、超出范围 400 `OUT_OF_RANGE`。记录返回 `distanceMeters`。坐标由客户端上报，范围校验只能防止误签，不能防止刻意伪造定位。
 - `GET /sign-tasks/{id}/summary`，`GET /sign-tasks/unsigned`
 - `GET /geocoding/search`，`GET /geocoding/reverse`
 - `GET /media/public/{id}`（仅活动封面），`GET /media/access/{id}?token=...`（5 分钟签名地址）；两者均支持 `variant=thumb` 返回缩略图，接口中的 `thumbnailUrl`、`coverThumbnailUrl`、`photoThumbnailUrl` 已带该参数

@@ -10,7 +10,7 @@
       </view>
       <view v-for="member in summary.members" :key="member.userId" class="card member-card">
         <view class="row-between"><view class="member-name"><view class="mini-avatar">{{ member.nickname?.slice(0,1) || '友' }}</view><text>{{ member.nickname }}</text></view><text :class="member.signed ? 'status-ok' : 'status-no'">{{ member.signed ? '已签到' : '未签到' }}</text></view>
-        <view v-if="member.record" class="record-info"><text class="muted">{{ displayTime(member.record.signedAt) }}</text><text v-if="member.record.address" class="muted">⌖ {{ member.record.address }}</text></view>
+        <view v-if="member.record" class="record-info"><text class="muted">{{ displayTime(member.record.signedAt) }}</text><text v-if="member.record.address" class="muted">⌖ {{ member.record.address }}</text><text v-if="member.record.distanceMeters != null" class="muted">距签到点 {{ member.record.distanceMeters }} 米</text></view>
         <image v-if="member.record?.photoUrl" class="proof" :src="member.record.photoThumbnailUrl || member.record.photoUrl" mode="aspectFill" @click="preview(member.record.photoUrl)" />
       </view>
     </template>

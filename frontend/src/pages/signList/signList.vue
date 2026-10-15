@@ -10,6 +10,7 @@
     <view v-for="task in tasks" v-else :key="task.id" class="card task-card" @click="sign(task.id)">
       <view class="row-between task-head"><view class="task-icon">✓</view><text class="tag">待完成</text></view>
       <view class="section-title">{{ task.title }}</view>
+      <view v-if="signRuleLabels(task).length" class="rule-chips"><text v-for="rule in signRuleLabels(task)" :key="rule" class="rule-chip">{{ rule }}</text></view>
       <text class="body-text">{{ task.description || '发起人未填写额外说明' }}</text>
       <view class="task-footer"><text class="muted">发布于 {{ displayTime(task.createdAt) }}</text><text class="go">去签到 ›</text></view>
     </view>
@@ -25,6 +26,7 @@ import { api } from '@/services/api'
 import { requireSession } from '@/services/session'
 import { displayTime } from '@/utils/time'
 import type { SignTask } from '@/services/types'
+import { signRuleLabels } from '@/utils/sign'
 const tasks = ref<SignTask[]>([])
 const loading = ref(false)
 const error = ref('')
@@ -42,5 +44,6 @@ const sign = (id: number) => uni.navigateTo({ url: `/pages/signIn/signIn?taskId=
 const history = () => uni.navigateTo({ url: '/pages/signDetail/signDetail' })
 </script>
 <style scoped lang="scss">
+.rule-chips{display:flex;flex-wrap:wrap;margin:4rpx 0 12rpx;gap:10rpx}.rule-chip{padding:6rpx 16rpx;color:$primary-dark;font-size:21rpx;line-height:1.4;background:$primary-soft;border-radius:999rpx}
 .page-head{align-items:flex-end}.task-card{position:relative}.task-head{margin-bottom:18rpx}.task-icon{display:flex;align-items:center;justify-content:center;width:64rpx;height:64rpx;color:#fff;font-size:30rpx;font-weight:800;background:linear-gradient(145deg,$primary,#35a298);border-radius:20rpx}.task-card .section-title{margin-bottom:10rpx}.task-footer{display:flex;align-items:center;justify-content:space-between;margin-top:24rpx;padding-top:20rpx;border-top:1rpx solid $border;gap:16rpx}.go{flex-shrink:0;color:$primary;font-size:25rpx;font-weight:700;white-space:nowrap}
 </style>
