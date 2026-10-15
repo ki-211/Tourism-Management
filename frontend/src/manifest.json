@@ -10,7 +10,10 @@
     "usingComponents": true,
     "nvueStyleCompiler": "uni-app",
     "compilerVersion": 3,
-    "modules": { "Geolocation": {}, "Camera": {} },
+    "modules": {
+      "Geolocation": {},
+      "Camera": {}
+    },
     "distribute": {
       "android": {
         "permissions": [
@@ -27,16 +30,29 @@
   },
   "mp-weixin": {
     "appid": "",
-    "setting": { "urlCheck": true },
-    "usingComponents": true,
-    "requiredBackgroundModes": ["location"],
-    "permission": {
-      "scope.userLocation": { "desc": "用于活动签到和由你主动开启的成员位置共享" }
+    "setting": {
+      "urlCheck": true
     },
-    "requiredPrivateInfos": ["getLocation", "startLocationUpdateBackground", "onLocationChange"]
+    "usingComponents": true,
+    "requiredBackgroundModes": [
+      "location"
+    ],
+    "permission": {
+      "scope.userLocation": {
+        "desc": "用于活动签到和由你主动开启的成员位置共享"
+      }
+    },
+    "requiredPrivateInfos": [
+      "getLocation",
+      "startLocationUpdateBackground",
+      "onLocationChange"
+    ]
   },
   "h5": {
-    "router": { "mode": "history", "base": "/" },
+    "router": {
+      "mode": "history",
+      "base": "/"
+    },
     "sdkConfigs": {
       "maps": {
         "amap": {
@@ -47,5 +63,7 @@
       }
     }
   },
-  "uniStatistics": { "enable": false }
+  "uniStatistics": {
+    "enable": false
+  }
 }

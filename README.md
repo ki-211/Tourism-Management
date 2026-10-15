@@ -13,18 +13,30 @@
 - 登录按 IP 与用户名双重限流
 - 单用途 WebSocket ticket、断线重连与 Redis 跨实例广播；业务数据以 HTTP 查询为准
 - 私有图片短时签名访问与权限二次校验、事务失败对象清理及孤儿文件回收
-- 本地 H2 + 文件存储零依赖启动；生产 MySQL 8.4 + Redis + S3 兼容存储
+- 本地默认 MySQL + 文件存储，可切换 H2 零依赖启动；生产 MySQL 8.4 + Redis + S3 兼容存储
 
 ## Windows 本地启动
 
 要求：JDK 21 或更高版本、Node.js 24。后端不要求本机安装 Maven。
 
+后端默认启用 `local` 环境，连接本机 MySQL 的 `localhost:3306/tourism`，连接配置位于 `backend/src/main/resources/application-local.yml`。启动前设置数据库账号和密码：
+
 ```powershell
 cd backend
+$env:DB_USERNAME = '你的MySQL用户名'
+$env:DB_PASSWORD = '你的MySQL密码'
 .\mvnw.cmd spring-boot:run
 ```
 
-首次启动会在 `backend/.local` 创建 H2 数据文件和上传目录。Swagger 地址为 <http://localhost:8080/swagger-ui.html>。
+使用 IDEA 启动时，在 `BackendApplication` 运行配置的环境变量中设置 `DB_USERNAME` 和 `DB_PASSWORD` 即可；默认环境仍为 `local`。
+
+如需使用原来的 H2 文件数据库，将活动环境设为 `h2`（配置位于 `application-h2.yml`），或在 `backend` 目录执行：
+
+```powershell
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=h2"
+```
+
+H2 数据文件保存在启动工作目录下的 `.local/tourism.mv.db`；从 `backend` 目录启动时为 `backend/.local/tourism.mv.db`，从项目根目录启动时为 `.local/tourism.mv.db`。上传目录同样相对于启动工作目录。切换数据库不会自动迁移已有数据。Swagger 地址为 <http://localhost:8080/swagger-ui.html>。
 
 另开终端：
 
