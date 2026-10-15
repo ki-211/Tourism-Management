@@ -15,6 +15,8 @@ public class Vehicle {
     @Column(name="driver_name",nullable=false,length=50) private String driverName;
     @Column(name="pickup_time",nullable=false) private LocalDateTime pickupTime;
     @Column(name="pickup_location",nullable=false,length=200) private String pickupLocation;
+    /** Passenger seats, excluding the driver. */
+    @Column(nullable=false) private Integer seats = 4;
     @Column(name="created_by",nullable=false) private Long createdBy;
     @Column(name="created_at",nullable=false) private LocalDateTime createdAt;
     @PrePersist void create(){createdAt=LocalDateTime.now();}

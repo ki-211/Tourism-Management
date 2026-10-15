@@ -21,7 +21,9 @@
 - `GET|POST /activities/{id}/messages`（默认返回最新 `limit` 条，升序；`beforeId` 向前翻页；`afterId` 增量拉取更新的消息）
 - `GET|POST /activities/{id}/photos`，`DELETE /activities/{id}/photos/{photoId}`
 - `GET /activities/{id}/locations`，`PUT|DELETE /activities/{id}/locations/me`
-- `GET|POST /activities/{id}/vehicles`
+- `GET|POST /activities/{id}/vehicles`，`PUT|DELETE /activities/{id}/vehicles/{vehicleId}`（负责人）
+- `POST /activities/{id}/vehicles/{vehicleId}/passengers`（无 body 为自己上车；负责人可传 `userId` 安排他人），`DELETE .../passengers/{userId}`（本人或负责人）
+- 车辆 `seats` 为乘客座位数（不含司机，1–80，默认 4）；每位成员按报名时的 `passengerCount`（缺省 1）占座，一个活动内只能乘坐一辆车，换车会自动释放原座位；座位不足返回 409 `VEHICLE_FULL`，编辑时座位数不能低于已占用数（409 `SEATS_BELOW_OCCUPIED`）。退出活动或注销账号会自动释放座位。
 - `GET|POST /activities/{id}/sign-tasks`，`GET /sign-tasks/{id}`
 - `POST /sign-tasks/{id}/records`（JSON 无照片或 multipart 带照片）
 - 发布签到可选 `deadline`（截止时间）、`latitude`/`longitude`/`radiusMeters`（50–5000 米，三者须同时提供，GCJ-02）、`locationName`、`photoRequired`。签到时依次校验：截止后 409 `SIGN_CLOSED`；需拍照却无照片 400 `PHOTO_REQUIRED`；有范围却无坐标 400 `LOCATION_REQUIRED`、超出范围 400 `OUT_OF_RANGE`。记录返回 `distanceMeters`。坐标由客户端上报，范围校验只能防止误签，不能防止刻意伪造定位。

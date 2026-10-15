@@ -8,6 +8,7 @@ import com.zkt.backend.media.MediaAssetRepository;
 import com.zkt.backend.media.MediaService;
 import com.zkt.backend.location.SharedLocationRepository;
 import com.zkt.backend.room.RoomEventPublisher;
+import com.zkt.backend.vehicle.VehiclePassengerRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -32,14 +33,16 @@ public class ActivityService {
     private final RoomEventPublisher events;
     private final SharedLocationRepository locations;
     private final Clock clock;
+    private final VehiclePassengerRepository passengers;
     private final SecureRandom random = new SecureRandom();
 
     public ActivityService(ActivityRepository activities, SignupRepository signups, UserRepository users,
                            MediaAssetRepository assets, MediaService media, RoomEventPublisher events,
-                           SharedLocationRepository locations, Clock clock) {
+                           SharedLocationRepository locations, Clock clock, VehiclePassengerRepository passengers) {
         this.activities = activities; this.signups = signups; this.users = users; this.assets = assets; this.media = media; this.events = events;
         this.locations = locations;
         this.clock = clock;
+        this.passengers = passengers;
     }
 
     @Transactional
@@ -83,6 +86,7 @@ public class ActivityService {
         if (!signups.existsByActivityIdAndUserId(activityId, userId))
             throw DomainException.badRequest("NOT_MEMBER", "尚未加入该活动");
         locations.deleteByActivityIdAndUserId(activityId, userId);
+        passengers.deleteByActivityIdAndUserId(activityId, userId);
         signups.deleteByActivityIdAndUserId(activityId, userId);
         MemberLeft payload = new MemberLeft(userId);
         events.publish(activityId, "LOCATION_REMOVED", payload);

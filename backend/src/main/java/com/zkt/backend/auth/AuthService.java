@@ -5,6 +5,7 @@ import com.zkt.backend.activity.ActivityRepository;
 import com.zkt.backend.activity.SignupRepository;
 import com.zkt.backend.location.SharedLocationRepository;
 import com.zkt.backend.room.RoomEventPublisher;
+import com.zkt.backend.vehicle.VehiclePassengerRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,18 +36,20 @@ public class AuthService {
     private final AuthenticatedUserCache userCache;
     private final TransactionTemplate transactions;
     private final LoginAttemptService loginAttempts;
+    private final VehiclePassengerRepository passengers;
     private final SecureRandom random = new SecureRandom();
 
     public AuthService(UserRepository users, RefreshTokenRepository refreshTokens, PasswordEncoder encoder,
                        JwtService jwt, AppSecurityProperties properties, Clock clock, ActivityRepository activities,
                        SignupRepository signups, SharedLocationRepository locations, RoomEventPublisher events,
                        AuthenticatedUserCache userCache, TransactionTemplate transactions,
-                       LoginAttemptService loginAttempts) {
+                       LoginAttemptService loginAttempts, VehiclePassengerRepository passengers) {
         this.users = users; this.refreshTokens = refreshTokens; this.encoder = encoder; this.jwt = jwt; this.properties = properties;
         this.clock = clock;
         this.activities = activities; this.signups = signups; this.locations = locations; this.events = events; this.userCache = userCache;
         this.transactions = transactions;
         this.loginAttempts = loginAttempts;
+        this.passengers = passengers;
     }
 
     @Transactional
@@ -109,6 +112,7 @@ public class AuthService {
         if (activities.existsByCreatorIdAndStatus(userId, com.zkt.backend.activity.ActivityStatus.ACTIVE))
             throw DomainException.conflict("CREATOR_MUST_TRANSFER", "请先转让或取消名下所有进行中的活动，再注销账号");
         locations.deleteByUserId(userId);
+        passengers.deleteByUserId(userId);
         signups.deleteByUserId(userId);
         refreshTokens.deleteByUserId(userId);
         user.setUsername("d_" + Long.toString(userId, 36));
