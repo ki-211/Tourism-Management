@@ -1,0 +1,23 @@
+# 本地开发配置模板（默认的 local 环境使用）。
+# 使用方法：复制本文件为同目录下的 application-local.yml，再把账号密码改成你自己的。
+#   PowerShell：Copy-Item application-local.yml.example application-local.yml
+# application-local.yml 已被 .gitignore 和 .dockerignore 排除，不会被提交，也不会打进镜像，可以放心写真实密码。
+spring:
+  datasource:
+    # 库不存在时会自动创建（账号需要有建库权限）；库名、端口不同时改这里
+    url: jdbc:mysql://localhost:3306/tourism?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&createDatabaseIfNotExist=true
+    # 改成你的 MySQL 账号密码，直接写即可，例如：
+    #   username: root
+    #   password: 123456
+    # 也可以保留下面的占位符，改用环境变量 DB_USERNAME / DB_PASSWORD 提供
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+  h2:
+    console:
+      enabled: false
+logging:
+  level:
+    com.zkt.backend: INFO
