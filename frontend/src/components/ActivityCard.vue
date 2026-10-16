@@ -2,10 +2,7 @@
   <view class="card activity" @click="$emit('open', activity.id)">
     <view class="cover-wrap">
       <image v-if="activity.coverUrl" class="cover" :src="activity.coverThumbnailUrl || activity.coverUrl" mode="aspectFill" />
-      <view v-else class="cover placeholder-cover">
-        <text class="placeholder-mark">行</text>
-        <text>把期待装进行程</text>
-      </view>
+      <view v-else class="cover"><CoverPlaceholder :id="activity.id" :title="activity.title" :location="activity.location" /></view>
       <text class="life-tag" :class="life">{{ lifeLabel }}</text>
       <text class="visibility">{{ activity.visibility === 'PUBLIC' ? '公开活动' : '邀请制' }}</text>
     </view>
@@ -14,9 +11,9 @@
         <text class="title">{{ activity.title }}</text>
         <text class="arrow">›</text>
       </view>
-      <view class="info-line"><text class="info-icon">⌖</text><text class="info-value">{{ activity.location }}</text></view>
-      <view class="info-line"><text class="info-icon">◷</text><text class="info-value">{{ timeText }}</text></view>
-      <view class="info-line"><text class="info-icon">◎</text><text class="info-value">{{ membersText }}</text></view>
+      <view class="info-line"><view class="info-icon"><AppIcon name="pin" /></view><text class="info-value">{{ activity.location }}</text></view>
+      <view class="info-line"><view class="info-icon"><AppIcon name="clock" /></view><text class="info-value">{{ timeText }}</text></view>
+      <view class="info-line"><view class="info-icon"><AppIcon name="users" /></view><text class="info-value">{{ membersText }}</text></view>
       <view class="meta-row">
         <text class="host">发起人 {{ activity.creatorName }}</text>
         <text v-if="activity.joined" class="tag">{{ activity.creator ? '我负责' : '已参与' }}</text>
@@ -27,6 +24,8 @@
 </template>
 
 <script setup lang="ts">
+import AppIcon from '@/components/AppIcon.vue'
+import CoverPlaceholder from '@/components/CoverPlaceholder.vue'
 import { computed } from 'vue'
 import { useCurrentTime } from '@/composables/useCurrentTime'
 import type { Activity } from '@/services/types'
@@ -55,8 +54,6 @@ const deadlineText = computed(() => {
 .activity { padding: 0; }
 .cover-wrap { position: relative; width: 100%; height: 286rpx; overflow: hidden; background: $primary-soft; }
 .cover { display: flex; width: 100%; height: 100%; }
-.placeholder-cover { align-items: center; justify-content: center; flex-direction: column; gap: 8rpx; color: rgba(255, 255, 255, .88); font-size: 24rpx; background: linear-gradient(145deg, #0f766e, #52a99e); }
-.placeholder-mark { display: flex; align-items: center; justify-content: center; width: 72rpx; height: 72rpx; color: $primary; font-size: 34rpx; font-weight: 800; background: rgba(255, 255, 255, .92); border-radius: 50%; }
 .visibility, .life-tag {
   position: absolute;
   top: 20rpx;

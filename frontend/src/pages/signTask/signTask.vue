@@ -17,7 +17,7 @@
       </view>
       <view v-if="useGeofence" class="geofence">
         <view class="point" :class="{ ready: point }">
-          <text class="point-icon">⌖</text>
+          <AppIcon name="pin" :size="34" />
           <view class="point-copy"><text class="point-label">{{ point ? '签到点' : '尚未选择签到点' }}</text><text class="point-value">{{ point ? point.address : '使用当前位置，或搜索地址' }}</text></view>
         </view>
         <button class="secondary-btn" :disabled="locating" @click="useCurrentLocation">{{ locating ? '定位中…' : '使用我当前的位置' }}</button>
@@ -45,6 +45,7 @@
 </template>
 
 <script setup lang="ts">
+import AppIcon from '@/components/AppIcon.vue'
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import DateTimeField from '@/components/DateTimeField.vue'

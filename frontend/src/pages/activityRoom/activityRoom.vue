@@ -113,6 +113,7 @@ onUnload(() => socket?.close())
 }
 /* #ifdef H5 */
 .room-page.is-chat{height:calc(100vh - 44px);min-height:calc(100vh - 44px);}
+@media (min-width: 900px) { .room-page { max-width: 960px; } }
 /* #endif */
 .tabs{position:sticky;top:0;z-index:5;display:flex;flex-shrink:0;width:100%;margin-bottom:28rpx;padding:7rpx;background:#e4ecea;border-radius:20rpx;gap:4rpx}
 .tabs button{display:flex;align-items:center;justify-content:center;flex:1;min-width:0;height:72rpx;margin:0;padding:0 8rpx;color:$text-muted;font-size:25rpx;font-weight:650;line-height:1;white-space:nowrap;background:transparent;border-radius:15rpx}

@@ -10,7 +10,7 @@
       </view>
       <view v-for="member in summary.members" :key="member.userId" class="card member-card">
         <view class="row-between"><view class="member-name"><view class="mini-avatar">{{ member.nickname?.slice(0,1) || '友' }}</view><text>{{ member.nickname }}</text></view><text :class="member.signed ? 'status-ok' : 'status-no'">{{ member.signed ? '已签到' : '未签到' }}</text></view>
-        <view v-if="member.record" class="record-info"><text class="muted">{{ displayTime(member.record.signedAt) }}</text><text v-if="member.record.address" class="muted">⌖ {{ member.record.address }}</text><text v-if="member.record.distanceMeters != null" class="muted">距签到点 {{ member.record.distanceMeters }} 米</text></view>
+        <view v-if="member.record" class="record-info"><text class="muted">{{ displayTime(member.record.signedAt) }}</text><view v-if="member.record.address" class="record-line"><AppIcon name="pin" :size="24" color="#73827f" /><text class="muted">{{ member.record.address }}</text></view><text v-if="member.record.distanceMeters != null" class="muted">距签到点 {{ member.record.distanceMeters }} 米</text></view>
         <image v-if="member.record?.photoUrl" class="proof" :src="member.record.photoThumbnailUrl || member.record.photoUrl" mode="aspectFill" @click="preview(member.record.photoUrl)" />
       </view>
     </template>
@@ -18,6 +18,7 @@
   </view>
 </template>
 <script setup lang="ts">
+import AppIcon from '@/components/AppIcon.vue'
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import LoadError from '@/components/LoadError.vue'
@@ -39,5 +40,6 @@ onLoad((options: any) => { taskId.value = Number(options.taskId); load() })
 function preview(url: string) { uni.previewImage({ current: url, urls: [url] }) }
 </script>
 <style scoped lang="scss">
+.record-line{display:flex;align-items:center;gap:8rpx}
 .summary-bar{display:flex;margin-bottom:26rpx;padding:24rpx;background:linear-gradient(135deg,$primary,#279a8f);border-radius:$radius;box-shadow:0 12rpx 28rpx rgba(15,118,110,.16)}.summary-bar>view{flex:1;text-align:center}.summary-number,.summary-label{display:block;color:#fff}.summary-number{font-size:40rpx;font-weight:800;line-height:1.2}.summary-label{margin-top:5rpx;color:rgba(255,255,255,.75);font-size:22rpx}.member-name{display:flex;align-items:center;min-width:0;gap:14rpx;font-size:28rpx;font-weight:700}.mini-avatar{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:58rpx;height:58rpx;color:$primary;font-size:24rpx;background:$primary-soft;border-radius:18rpx}.status-ok,.status-no{flex-shrink:0;font-size:23rpx;font-weight:700;white-space:nowrap}.status-ok{color:$success}.status-no{color:$text-muted}.record-info{margin-top:16rpx;padding-top:14rpx;border-top:1rpx solid $border}.proof{width:180rpx;height:180rpx;margin-top:16rpx;border-radius:16rpx}.member-skeleton{height:150rpx}
 </style>

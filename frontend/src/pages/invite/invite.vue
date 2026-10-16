@@ -1,2 +1,41 @@
-<template><view class="page"><view class="page-head"><text class="eyebrow">邀请加入</text><view class="page-title">邀请码加入</view><text class="muted">输入发起人分享的 10 位邀请码。</text></view><view class="card form-card"><view class="field"><text class="field-label">活动邀请码</text><input v-model="code" class="input code" maxlength="10" placeholder="输入 10 位邀请码" /></view><button class="primary-btn" :loading="loading" :disabled="loading" @click="lookup">查询活动</button></view><view v-if="preview" class="card"><view class="section-title">{{ preview.title }}</view><view class="info-line"><text class="info-icon">⌖</text><text class="info-value">{{ preview.location }}</text></view><view class="info-line"><text class="info-icon">◷</text><text class="info-value">{{ displayTime(preview.startTime) }}</text></view><button class="primary-btn" @click="go">查看并报名</button></view></view></template>
-<script setup lang="ts">import{ref}from'vue';import{api}from'@/services/api';import{displayTime}from'@/utils/time';const code=ref(''),preview=ref<any>(null),loading=ref(false);async function lookup(){if(loading.value)return;code.value=code.value.trim().toUpperCase();if(code.value.length!==10)return uni.showToast({title:'请输入10位邀请码',icon:'none'});loading.value=true;preview.value=null;try{preview.value=await api(`/activities/invitations/${code.value}`)}finally{loading.value=false}}function go(){uni.navigateTo({url:`/pages/activityDetail/activityDetail?id=${preview.value.id}&code=${code.value}`})}</script><style scoped>.code{text-transform:uppercase;letter-spacing:8rpx}</style>
+<template>
+  <view class="page">
+    <view class="page-head"><text class="eyebrow">邀请加入</text><view class="page-title">邀请码加入</view><text class="muted">输入发起人分享的 10 位邀请码。</text></view>
+    <view class="card form-card">
+      <view class="field">
+        <text class="field-label">活动邀请码</text>
+        <!-- Letter spacing only for the typed code, so the placeholder reads normally. -->
+        <input v-model="code" class="input" :class="{ code: code }" maxlength="10" placeholder="输入 10 位邀请码" />
+      </view>
+      <button class="primary-btn" :loading="loading" :disabled="loading" @click="lookup">查询活动</button>
+    </view>
+    <view v-if="preview" class="card">
+      <view class="section-title">{{ preview.title }}</view>
+      <view class="info-line"><view class="info-icon"><AppIcon name="pin" /></view><text class="info-value">{{ preview.location }}</text></view>
+      <view class="info-line"><view class="info-icon"><AppIcon name="clock" /></view><text class="info-value">{{ displayTime(preview.startTime) }}</text></view>
+      <button class="primary-btn" @click="go">查看并报名</button>
+    </view>
+  </view>
+</template>
+<script setup lang="ts">
+import { ref } from 'vue'
+import AppIcon from '@/components/AppIcon.vue'
+import { api } from '@/services/api'
+import { displayTime } from '@/utils/time'
+const code = ref('')
+const preview = ref<any>(null)
+const loading = ref(false)
+async function lookup() {
+  if (loading.value) return
+  code.value = code.value.trim().toUpperCase()
+  if (code.value.length !== 10) return uni.showToast({ title: '请输入10位邀请码', icon: 'none' })
+  loading.value = true
+  preview.value = null
+  try { preview.value = await api(`/activities/invitations/${code.value}`) }
+  finally { loading.value = false }
+}
+function go() { uni.navigateTo({ url: `/pages/activityDetail/activityDetail?id=${preview.value.id}&code=${code.value}` }) }
+</script>
+<style scoped>
+.code { text-transform: uppercase; letter-spacing: 8rpx; font-weight: 650; }
+</style>

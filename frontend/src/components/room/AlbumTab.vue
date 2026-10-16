@@ -69,6 +69,9 @@ function remove(photo: Photo) {
 }
 </script>
 <style scoped lang="scss">
-.tab-head{align-items:flex-end;margin-bottom:24rpx}.tab-head .section-title{margin-bottom:3rpx}.photo-grid{display:flex;flex-wrap:wrap;margin:-6rpx}.photo-wrap,.photo-skeleton{position:relative;width:calc(33.333% - 12rpx);height:210rpx;margin:6rpx}.photo{width:100%;height:100%;border-radius:16rpx}.photo-skeleton{border-radius:16rpx;background:linear-gradient(100deg,#e7efed,#f7faf9,#e7efed);background-size:300% 100%;animation:skeleton-wave 1.35s ease-in-out infinite}.photo-delete{position:absolute;top:8rpx;right:8rpx;width:48rpx;height:48rpx;margin:0;padding:0;color:#fff;font-size:34rpx;line-height:44rpx;background:rgba(23,35,33,.72);border-radius:50%}
+.tab-head{align-items:flex-end;margin-bottom:24rpx}.tab-head .section-title{margin-bottom:3rpx}.photo-grid{display:flex;flex-wrap:wrap;margin:-6rpx}.photo-wrap,.photo-skeleton{position:relative;width:calc(33.333% - 12rpx);height:0;padding-bottom:calc(33.333% - 12rpx);margin:6rpx;overflow:hidden;border-radius:16rpx}.photo{position:absolute;top:0;left:0;width:100%;height:100%}.photo-skeleton{border-radius:16rpx;background:linear-gradient(100deg,#e7efed,#f7faf9,#e7efed);background-size:300% 100%;animation:skeleton-wave 1.35s ease-in-out infinite}.photo-delete{position:absolute;top:10rpx;right:10rpx;display:flex;align-items:center;justify-content:center;width:40rpx;height:40rpx;margin:0;padding:0;color:#fff;font-size:26rpx;line-height:1;background:rgba(23,35,33,.42);border-radius:50%}
 .upload-progress{margin-bottom:22rpx;padding:20rpx;background:$primary-soft;border-radius:18rpx}.progress-copy{display:flex;justify-content:space-between;margin-bottom:12rpx;color:$primary-dark;font-size:23rpx}.progress-track{height:10rpx;overflow:hidden;background:rgba(15,118,110,.14);border-radius:999rpx}.progress-track view{height:100%;background:$primary;border-radius:999rpx;transition:width .2s}
+/* #ifdef H5 */
+@media (min-width: 900px) { .photo-wrap,.photo-skeleton{width:calc(20% - 12rpx);padding-bottom:calc(20% - 12rpx)} }
+/* #endif */
 </style>

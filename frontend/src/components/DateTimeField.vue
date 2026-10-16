@@ -2,13 +2,13 @@
   <view class="datetime-field">
     <picker class="picker-part" mode="date" :value="dateValue" :start="startDate" @change="onDateChange">
       <view class="picker-box" :class="{ placeholder: !dateValue }">
-        <text class="picker-icon">▦</text>
+        <AppIcon name="calendar" :size="28" />
         <text>{{ dateValue || '选择日期' }}</text>
       </view>
     </picker>
     <picker class="picker-part time-part" mode="time" :value="timeValue" @change="onTimeChange">
       <view class="picker-box" :class="{ placeholder: !timeValue }">
-        <text class="picker-icon">◷</text>
+        <AppIcon name="clock" :size="28" />
         <text>{{ timeValue || '选择时间' }}</text>
       </view>
     </picker>
@@ -16,6 +16,7 @@
 </template>
 
 <script setup lang="ts">
+import AppIcon from '@/components/AppIcon.vue'
 import { computed } from 'vue'
 
 const props = defineProps<{ modelValue: string }>()

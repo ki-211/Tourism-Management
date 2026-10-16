@@ -9,9 +9,9 @@
     <view v-for="vehicle in list" v-else :key="vehicle.id" class="card vehicle-card">
       <view class="row-between"><view class="plate">{{ vehicle.plateNumber }}</view><text class="tag">{{ vehicle.mine ? '我的座位' : '出行车辆' }}</text></view>
       <view class="vehicle-info">
-        <view class="info-line"><text class="info-icon">◇</text><text class="info-value">司机 {{ vehicle.driverName }}</text></view>
-        <view class="info-line"><text class="info-icon">◷</text><text class="info-value">{{ displayTime(vehicle.pickupTime) }}</text></view>
-        <view class="info-line"><text class="info-icon">⌖</text><text class="info-value">{{ vehicle.pickupLocation }}</text></view>
+        <view class="info-line"><view class="info-icon"><AppIcon name="user" /></view><text class="info-value">司机 {{ vehicle.driverName }}</text></view>
+        <view class="info-line"><view class="info-icon"><AppIcon name="clock" /></view><text class="info-value">{{ displayTime(vehicle.pickupTime) }}</text></view>
+        <view class="info-line"><view class="info-icon"><AppIcon name="pin" /></view><text class="info-value">{{ vehicle.pickupLocation }}</text></view>
       </view>
       <view class="seats">
         <view class="row-between seat-copy"><text>座位</text><text :class="{ full: isFull(vehicle) }">{{ vehicle.occupiedSeats }} / {{ vehicle.seats }}{{ isFull(vehicle) ? ' 已坐满' : '' }}</text></view>
@@ -39,6 +39,7 @@
   </view>
 </template>
 <script setup lang="ts">
+import AppIcon from '@/components/AppIcon.vue'
 import { computed, ref } from 'vue'
 import { onLoad, onPullDownRefresh, onShow } from '@dcloudio/uni-app'
 import LoadError from '@/components/LoadError.vue'

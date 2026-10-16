@@ -11,7 +11,7 @@
       <view class="card form-card">
         <view class="section-title">签到信息</view>
         <view class="location-box" :class="{ ready: address }">
-          <text class="location-icon">⌖</text>
+          <view class="location-icon"><AppIcon name="pin" :size="34" /></view>
           <view><text class="location-label">{{ locating ? '正在获取位置…' : address ? '当前位置' : '未获取位置' }}</text><text class="location-value">{{ address || (task?.radiusMeters ? '该签到需要定位' : '位置为可选信息，不影响签到') }}</text><text v-if="distance != null" class="distance" :class="{ far: distance > (task?.radiusMeters || 0) }">距签到点约 {{ distance }} 米（范围 {{ task?.radiusMeters }} 米）</text></view>
         </view>
         <button class="secondary-btn" :disabled="locating || signing" @click="locate">{{ locating ? '定位中…' : '重新定位' }}</button>
@@ -27,6 +27,7 @@
   </view>
 </template>
 <script setup lang="ts">
+import AppIcon from '@/components/AppIcon.vue'
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import LoadError from '@/components/LoadError.vue'

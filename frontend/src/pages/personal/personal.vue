@@ -15,11 +15,11 @@
     <view class="motto"><text class="motto-mark">“</text><text>认真组织每场活动，也珍惜每一次共同参与。</text></view>
     <view class="section-label">我的服务</view>
     <view class="card menu-card">
-      <view class="menu-item" @click="history"><view class="menu-icon warm">✓</view><view class="menu-copy"><text class="menu-title">签到记录</text><text class="muted">查看已完成的活动签到</text></view><text class="chevron">›</text></view>
+      <view class="menu-item" @click="history"><view class="menu-icon warm"><AppIcon name="check" :size="32" color="#d97706" /></view><view class="menu-copy"><text class="menu-title">签到记录</text><text class="muted">查看已完成的活动签到</text></view><text class="chevron">›</text></view>
       <view class="divider"></view>
-      <view class="menu-item" @click="edit"><view class="menu-icon">✎</view><view class="menu-copy"><text class="menu-title">个人资料</text><text class="muted">修改昵称与个人信息</text></view><text class="chevron">›</text></view>
+      <view class="menu-item" @click="edit"><view class="menu-icon"><AppIcon name="pen" :size="32" /></view><view class="menu-copy"><text class="menu-title">个人资料</text><text class="muted">修改昵称与个人信息</text></view><text class="chevron">›</text></view>
       <view class="divider"></view>
-      <view class="menu-item" @click="security"><view class="menu-icon">⌾</view><view class="menu-copy"><text class="menu-title">账号与安全</text><text class="muted">修改密码、退出设备或注销账号</text></view><text class="chevron">›</text></view>
+      <view class="menu-item" @click="security"><view class="menu-icon"><AppIcon name="shield" :size="32" /></view><view class="menu-copy"><text class="menu-title">账号与安全</text><text class="muted">修改密码、退出设备或注销账号</text></view><text class="chevron">›</text></view>
     </view>
     <button class="logout-button" @click="logout">退出当前账号</button>
     </template>
@@ -27,6 +27,7 @@
 </template>
 
 <script setup lang="ts">
+import AppIcon from '@/components/AppIcon.vue'
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import DesktopNav from '@/components/DesktopNav.vue'

@@ -18,7 +18,9 @@ text, view, button, input, textarea {
 .page { max-width: 1200px; min-height: calc(100vh - 44px); margin: 0 auto; padding-left: 24px; padding-right: 24px; }
 @media (min-width: 900px) {
   .page.with-desktop-nav { max-width: 1500px; margin: 0; padding-left: 264px; padding-right: 40px; }
-  uni-tabbar .uni-tabbar-bottom { display: none !important; }
+  /* The sidebar replaces the tab bar on wide screens; <uni-tabbar> itself carries the .uni-tabbar-bottom class. */
+  uni-tabbar.uni-tabbar-bottom { display: none !important; }
+  :root { --window-bottom: 0px !important; }
   uni-page-wrapper { padding-bottom: 0 !important; }
 }
 /* #endif */
@@ -126,9 +128,10 @@ button[size="mini"] { min-height: 62rpx; padding: 0 22rpx; line-height: 62rpx; b
 }
 
 .empty { padding: 100rpx 20rpx; color: $text-muted; font-size: 27rpx; line-height: 1.6; text-align: center; }
-.empty::before { display: block; width: 88rpx; height: 88rpx; margin: 0 auto 22rpx; color: $primary; font-size: 58rpx; line-height: 88rpx; content: "⌁"; background: $primary-soft; border-radius: 50%; }
+/* Same stroke icon set as AppIcon (utils/icons.ts "inbox"); a CSS background because ::before cannot host a component. */
+.empty::before { display: block; width: 96rpx; height: 96rpx; margin: 0 auto 22rpx; content: ""; background: $primary-soft url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMGY3NjZlIiBzdHJva2Utd2lkdGg9IjEuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNNCAxMy4yIDYuMyA1LjhoMTEuNEwyMCAxMy4yVjE4YTEuMiAxLjIgMCAwIDEtMS4yIDEuMkg1LjJBMS4yIDEuMiAwIDAgMSA0IDE4eiIvPjxwYXRoIGQ9Ik00IDEzLjJoNC42bDEuMyAyLjZoNC4ybDEuMy0yLjZIMjAiLz48L3N2Zz4=") center / 48rpx 48rpx no-repeat; border-radius: 50%; }
 .info-line { display: flex; align-items: flex-start; min-width: 0; margin-top: 12rpx; color: $text-secondary; font-size: 26rpx; line-height: 1.55; }
-.info-icon { flex-shrink: 0; width: 42rpx; color: $primary; font-size: 25rpx; }
+.info-icon { display: flex; flex-shrink: 0; margin: 5rpx 14rpx 0 0; }
 .info-value { min-width: 0; word-break: break-word; }
 .form-card { padding: 34rpx 30rpx; }
 .form-intro { margin-bottom: 30rpx; }

@@ -6,14 +6,16 @@
     <view v-for="member in members" v-else :key="member.userId" class="card member-card">
       <view class="member-main">
         <view class="member-avatar">{{ member.nickname?.slice(0, 1) || '友' }}</view>
-        <view class="member-copy"><view class="section-title">{{ member.nickname }}</view><text class="muted">@{{ member.username }} · {{ member.grade || '未填写身份或部门' }}</text></view>
+        <view class="member-copy">
+          <text class="member-name">{{ member.nickname }}</text>
+          <text class="muted">@{{ member.username }}{{ member.grade ? ` · ${member.grade}` : '' }}</text>
+        </view>
+        <button v-if="canTransfer(member.userId)" class="ghost-btn transfer-btn" :disabled="transferring" @click="transfer(member.userId)">转让负责人</button>
       </view>
-      <view class="member-details">
-        <view><text class="detail-label">随行人数</text><text class="detail-value">{{ member.passengerCount ?? '未填写' }}</text></view>
-        <view><text class="detail-label">备注</text><text class="detail-value">{{ member.remark || '无' }}</text></view>
-      </view>
-      <view v-if="canTransfer(member.userId)" class="transfer-row">
-        <button class="transfer-btn" :disabled="transferring" @click="transfer(member.userId)">转让给此人</button>
+      <!-- Only filled-in sign-up details are shown; empty ones used to repeat "未填写 / 无" on every card. -->
+      <view v-if="member.passengerCount || member.remark" class="member-extra">
+        <text v-if="member.passengerCount" class="chip">随行 {{ member.passengerCount }} 人</text>
+        <text v-if="member.remark" class="note">{{ member.remark }}</text>
       </view>
     </view>
     <view v-if="!loading && !error && !members.length" class="empty">暂无参与者</view>
@@ -58,5 +60,14 @@ function transfer(userId: number) {
 }
 </script>
 <style scoped lang="scss">
-.member-main{display:flex;align-items:center;min-width:0;gap:18rpx}.member-avatar{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:74rpx;height:74rpx;color:#fff;font-size:29rpx;font-weight:800;background:linear-gradient(145deg,$primary,#47aaa0);border-radius:24rpx 24rpx 24rpx 8rpx}.member-copy{flex:1;min-width:0}.member-copy .section-title{margin-bottom:3rpx}.member-details{display:flex;margin-top:22rpx;padding:20rpx;background:#f7faf9;border-radius:18rpx;gap:24rpx}.member-details>view{flex:1;min-width:0}.detail-label,.detail-value{display:block}.detail-label{margin-bottom:5rpx;color:$text-muted;font-size:22rpx}.detail-value{color:$text-secondary;font-size:25rpx;line-height:1.5;word-break:break-word}.transfer-row{display:flex;justify-content:flex-end;margin-top:12rpx}.transfer-btn{height:56rpx;margin:0;padding:0 8rpx;color:$text-muted;font-size:22rpx;line-height:56rpx;background:transparent}
+.member-card { padding: 26rpx 28rpx; }
+.member-main { display: flex; align-items: center; min-width: 0; gap: 18rpx; }
+.member-avatar { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 76rpx; height: 76rpx; color: #fff; font-size: 30rpx; font-weight: 800; background: linear-gradient(145deg, $primary, #47aaa0); border-radius: 24rpx 24rpx 24rpx 8rpx; }
+.member-copy { flex: 1; min-width: 0; }
+.member-name { display: block; color: $text-main; font-size: 30rpx; font-weight: 700; line-height: 1.4; }
+.member-copy .muted { font-size: 23rpx; line-height: 1.5; }
+.transfer-btn { height: 56rpx; padding: 0 18rpx; font-size: 22rpx; }
+.member-extra { display: flex; flex-wrap: wrap; align-items: center; margin: 18rpx 0 0 94rpx; gap: 12rpx; }
+.chip { padding: 6rpx 16rpx; color: $primary-dark; font-size: 22rpx; background: $primary-soft; border-radius: 999rpx; }
+.note { min-width: 0; color: $text-secondary; font-size: 24rpx; line-height: 1.5; word-break: break-word; }
 </style>

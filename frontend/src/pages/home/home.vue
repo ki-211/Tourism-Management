@@ -10,7 +10,7 @@
       <view class="sun"><text>↗</text></view>
     </view>
     <view class="quick-actions">
-      <button class="quick-item" @click="invite"><text class="quick-icon">⌁</text><view><text class="quick-title">邀请码</text><text class="quick-desc">加入专属活动</text></view></button>
+      <button class="quick-item" @click="invite"><view class="quick-icon"><AppIcon name="ticket" :size="34" /></view><view><text class="quick-title">邀请码</text><text class="quick-desc">加入专属活动</text></view></button>
       <button class="quick-item primary-quick" @click="create"><text class="quick-icon">＋</text><view><text class="quick-title">发布活动</text><text class="quick-desc">创建新的活动</text></view></button>
     </view>
     <view class="list-head row-between"><view><text class="section-title">精选活动</text><text class="muted">看看大家最近都在计划什么</text></view><text v-if="list.length" class="count">{{ list.length }} 个</text></view>
@@ -22,6 +22,7 @@
 </template>
 
 <script setup lang="ts">
+import AppIcon from '@/components/AppIcon.vue'
 import { ref } from 'vue'
 import { onPullDownRefresh, onShow } from '@dcloudio/uni-app'
 import ActivityCard from '@/components/ActivityCard.vue'

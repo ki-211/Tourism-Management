@@ -22,7 +22,7 @@
         <view class="field">
           <text class="field-label">活动类型</text>
           <picker :range="['公开活动', '邀请制活动']" @change="form.visibility = Number($event.detail.value) === 0 ? 'PUBLIC' : 'INVITE_ONLY'">
-            <view class="input picker-value"><text>{{ form.visibility === 'PUBLIC' ? '公开活动' : '邀请制活动' }}</text><text class="picker-arrow">⌄</text></view>
+            <view class="input picker-value"><text>{{ form.visibility === 'PUBLIC' ? '公开活动' : '邀请制活动' }}</text><AppIcon name="chevronDown" :size="28" /></view>
           </picker>
         </view>
         <view class="field" :class="{ 'has-error': errors.capacity }">
@@ -85,6 +85,7 @@
 </template>
 
 <script setup lang="ts">
+import AppIcon from '@/components/AppIcon.vue'
 import { reactive, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import DateTimeField from '@/components/DateTimeField.vue'

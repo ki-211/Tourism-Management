@@ -4,17 +4,17 @@
       <view class="detail-main">
       <view class="hero-wrap">
       <image v-if="activity.coverUrl" class="hero" :src="activity.coverUrl" mode="aspectFill" />
-      <view v-else class="hero hero-empty"><text class="hero-mark">行</text><text>一起去更远的地方</text></view>
+      <view v-else class="hero"><CoverPlaceholder :id="activity.id" :title="activity.title" :location="activity.location" variant="hero" /></view>
       <text class="hero-tag">{{ activity.visibility === 'PUBLIC' ? '公开活动' : '邀请制活动' }}</text>
       <text class="life-tag" :class="life">{{ lifeLabel }}</text>
     </view>
     <view class="card overview">
       <view v-if="cancelled" class="cancel-notice"><text class="notice-label">活动已取消</text><text>{{ activity.cancelReason || '发起人已取消本次活动，活动空间仅供查看。' }}</text></view>
       <view class="row-between heading"><view class="page-title">{{ activity.title }}</view><text v-if="activity.joined" class="tag">{{ activity.creator ? '我负责' : '已参与' }}</text></view>
-      <view class="info-line"><text class="info-icon">⌖</text><text class="info-value">{{ activity.location }}</text></view>
-      <view class="info-line"><text class="info-icon">◷</text><text class="info-value">{{ timeText }}</text></view>
-      <view class="info-line"><text class="info-icon">◇</text><text class="info-value">由 {{ activity.creatorName }} 发起</text></view>
-      <view class="info-line"><text class="info-icon">◎</text><text class="info-value">{{ membersText }}</text></view>
+      <view class="info-line"><view class="info-icon"><AppIcon name="pin" /></view><text class="info-value">{{ activity.location }}</text></view>
+      <view class="info-line"><view class="info-icon"><AppIcon name="clock" /></view><text class="info-value">{{ timeText }}</text></view>
+      <view class="info-line"><view class="info-icon"><AppIcon name="user" /></view><text class="info-value">由 {{ activity.creatorName }} 发起</text></view>
+      <view class="info-line"><view class="info-icon"><AppIcon name="users" /></view><text class="info-value">{{ membersText }}</text></view>
       <view v-if="activity.feeRule" class="notice"><text class="notice-label">费用说明</text><text>{{ activity.feeRule }}</text></view>
       <view class="description-block"><text class="section-title">活动介绍</text><text class="body-text">{{ activity.description || '发起人暂未填写活动说明。' }}</text></view>
       <view v-if="activity.creator && activity.invitationCode" class="invite">
@@ -51,6 +51,8 @@
 </template>
 
 <script setup lang="ts">
+import AppIcon from '@/components/AppIcon.vue'
+import CoverPlaceholder from '@/components/CoverPlaceholder.vue'
 import { computed, reactive, ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { useCurrentTime } from '@/composables/useCurrentTime'
@@ -162,8 +164,6 @@ const members = () => uni.navigateTo({ url: `/pages/signupList/signupList?id=${i
 .detail-skeleton { height: 400rpx; }
 .hero-wrap { position: relative; height: 400rpx; margin: 0 -28rpx 24rpx; overflow: hidden; }
 .hero { display: flex; width: 100%; height: 100%; }
-.hero-empty { align-items: center; justify-content: center; flex-direction: column; color: rgba(255,255,255,.85); font-size: 25rpx; background: linear-gradient(145deg, #0b5f59, #55ada3); gap: 10rpx; }
-.hero-mark { display: flex; align-items: center; justify-content: center; width: 82rpx; height: 82rpx; color: $primary; font-size: 38rpx; font-weight: 800; background: rgba(255,255,255,.92); border-radius: 50%; }
 .hero-tag, .life-tag { position: absolute; bottom: 24rpx; padding: 10rpx 18rpx; color: #fff; font-size: 22rpx; font-weight: 650; line-height: 1.3; white-space: nowrap; border-radius: 999rpx; }
 .hero-tag { right: 26rpx; background: rgba(19,44,40,.66); }
 .life-tag { left: 26rpx; background: rgba(19,44,40,.66); }
@@ -186,8 +186,8 @@ const members = () => uni.navigateTo({ url: `/pages/signupList/signupList?id=${i
 .invite-label { color: $text-muted; font-size: 22rpx; line-height: 1.4; }
 .invite-code { margin-top: 5rpx; color: $primary-dark; font-size: 34rpx; font-weight: 800; line-height: 1.2; letter-spacing: 4rpx; word-break: break-all; }
 .rotate-btn { flex-shrink: 0; height: 60rpx; margin: 0; padding: 0 20rpx; color: $primary; font-size: 23rpx; line-height: 60rpx; white-space: nowrap; background: #fff; border-radius: 14rpx; }
-.actions { padding-top: 12rpx; }
-.action-grid { display: flex; flex-wrap: wrap; gap: 16rpx; }
+.actions > .primary-btn { margin-top: 0; }
+.action-grid { display: flex; flex-wrap: wrap; margin-top: 18rpx; gap: 16rpx; }
 .action-grid .secondary-btn { flex: 1; min-width: 210rpx; margin-top: 0; }
 .leave-btn { width: 100%; height: 76rpx; margin-top: 26rpx; color: $danger; font-size: 25rpx; line-height: 76rpx; background: transparent; border: 1rpx solid rgba(220,76,76,.26); border-radius: 17rpx; }
 /* #ifdef H5 */
