@@ -1,6 +1,7 @@
 package com.zkt.backend.config;
 
 import com.zkt.backend.auth.AppSecurityProperties;
+import com.zkt.backend.auth.WechatProperties;
 import com.zkt.backend.media.StorageProperties;
 import io.jsonwebtoken.io.Decoders;
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -17,13 +18,15 @@ public class ProductionConfigurationValidator implements SmartInitializingSingle
     private final CorsProperties cors;
     private final StorageProperties storage;
     private final String amapKey;
+    private final WechatProperties wechat;
 
     public ProductionConfigurationValidator(AppSecurityProperties security, CorsProperties cors, StorageProperties storage,
-            @Value("${app.amap-web-key:}") String amapKey) {
+            @Value("${app.amap-web-key:}") String amapKey, WechatProperties wechat) {
         this.security = security;
         this.cors = cors;
         this.storage = storage;
         this.amapKey = amapKey;
+        this.wechat = wechat;
     }
 
     @Override
@@ -44,6 +47,8 @@ public class ProductionConfigurationValidator implements SmartInitializingSingle
         require(storage.s3AccessKey(), "S3_ACCESS_KEY");
         require(storage.s3SecretKey(), "S3_SECRET_KEY");
         require(amapKey, "AMAP_WEB_KEY");
+        // 微信登录可选；一旦配置 AppID 就必须同时配置 AppSecret
+        if (wechat.appId() != null && !wechat.appId().isBlank()) require(wechat.appSecret(), "WECHAT_APP_SECRET");
     }
 
     private static void require(String value, String name) {

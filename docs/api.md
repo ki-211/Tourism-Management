@@ -13,6 +13,7 @@
 ## 主要端点
 
 - `POST /auth/register|login|refresh|logout`，`POST /auth/ws-ticket`
+- `POST /auth/wechat`：请求体 `{ "code": "<wx.login 返回的 code>" }`，返回与 `/auth/login` 相同的令牌结构。首次登录按 openid 自动建号（用户名 `wx_` 开头，`passwordSet=false`）；此类账号可不传 `currentPassword` 直接设置密码，注销时无需密码。
 - `GET|PATCH /users/me`，`PUT /users/me/password`，`POST /users/me/logout-all`，`DELETE /users/me`
 - `GET /users/me/sign-records`
 - `GET|POST /activities`，`GET /activities/{id}`

@@ -18,6 +18,8 @@ curl -fsS http://127.0.0.1:8088/actuator/health/readiness
 
 后端在 `prod` profile 下会校验 Base64 JWT 密钥（解码后至少 32 字节）、HTTPS CORS/公开地址、S3 和高德配置；校验不通过时不会带病启动。内置 MinIO 必须保持 `S3_PATH_STYLE=true`。若改用 AWS S3，再按供应商要求改为 `false`。
 
+微信小程序登录需在后端配置 `WECHAT_APP_ID` 与 `WECHAT_APP_SECRET`（与 `frontend/src/manifest.json` 中 `mp-weixin.appid` 为同一个小程序），未配置时 `/auth/wechat` 返回 `WECHAT_NOT_CONFIGURED`。后端需能访问 `https://api.weixin.qq.com`。
+
 生产 JWT 密钥需为至少 32 字节随机值的 Base64。地图需要三类配置：后端 `AMAP_WEB_KEY` 使用高德 Web Service Key；H5 构建参数 `VITE_AMAP_JS_KEY` 使用高德 JS API Key；安全校验二选一配置 `AMAP_H5_SECURITY_JS_CODE` 或 `AMAP_H5_SERVICE_HOST`。`npm run dev:h5` 和 H5 构建都会临时注入客户端配置，并在开发服务停止或构建结束后恢复 `manifest.json`；仓库不得提交真实值。未配置客户端 Key 时 H5 会显示明确提示并保留成员位置列表，不渲染空白地图。
 
 ## HTTPS / WSS

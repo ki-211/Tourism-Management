@@ -1,4 +1,4 @@
-export interface SessionUser{id:number;username:string;nickname:string;role:string}
+export interface SessionUser{id:number;username:string;nickname:string;role:string;passwordSet?:boolean;wechatBound?:boolean}
 const ACCESS='tourism.accessToken',REFRESH='tourism.refreshToken',USER='tourism.user'
 export const accessToken=()=>uni.getStorageSync(ACCESS) as string||''
 export const refreshToken=()=>uni.getStorageSync(REFRESH) as string||''

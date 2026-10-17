@@ -59,6 +59,9 @@ app:
     s3-secret-key: ${S3_SECRET_KEY:}
     s3-path-style: ${S3_PATH_STYLE:true}
   amap-web-key: ${AMAP_WEB_KEY:}
+  wechat:
+    app-id: ${WECHAT_APP_ID:}
+    app-secret: ${WECHAT_APP_SECRET:}
 
 management:
   health:

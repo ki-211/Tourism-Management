@@ -67,6 +67,8 @@ services:
       S3_PATH_STYLE: ${S3_PATH_STYLE:-true}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost}
       AMAP_WEB_KEY: ${AMAP_WEB_KEY:-}
+      WECHAT_APP_ID: ${WECHAT_APP_ID:-}
+      WECHAT_APP_SECRET: ${WECHAT_APP_SECRET:-}
       REALTIME_MODE: redis
       REDIS_HOST: redis
       REDIS_PASSWORD: ${REDIS_PASSWORD}

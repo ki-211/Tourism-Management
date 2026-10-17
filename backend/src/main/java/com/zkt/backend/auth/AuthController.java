@@ -22,6 +22,9 @@ public class AuthController {
     @PostMapping("/login") ApiResponse<AuthService.Tokens> login(@Valid @RequestBody LoginRequest r) {
         return ApiResponse.ok("登录成功", service.login(r.username(), r.password()));
     }
+    @PostMapping("/wechat") ApiResponse<AuthService.Tokens> wechat(@Valid @RequestBody WechatLoginRequest r) {
+        return ApiResponse.ok("登录成功", service.wechatLogin(r.code()));
+    }
     @PostMapping("/refresh") ApiResponse<AuthService.Tokens> refresh(@Valid @RequestBody TokenRequest r) {
         return ApiResponse.ok(service.refresh(r.refreshToken()));
     }
@@ -38,6 +41,7 @@ public class AuthController {
             @NotBlank @Size(min = 8, max = 64) String password,
             @Size(max = 30) String nickname) {}
     public record LoginRequest(@NotBlank String username, @NotBlank String password) {}
+    public record WechatLoginRequest(@NotBlank @Size(max = 128) String code) {}
     public record TokenRequest(@NotBlank String refreshToken) {}
     public record WsTicket(String ticket, long expiresIn) {}
 }

@@ -79,7 +79,7 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
     }
 
     private String endpointGroup(String path) {
-        if (path.endsWith("/auth/login") || path.endsWith("/auth/register")) return "auth";
+        if (path.endsWith("/auth/login") || path.endsWith("/auth/register") || path.endsWith("/auth/wechat")) return "auth";
         if (path.endsWith("/cover") || path.endsWith("/photos") || path.matches(".*/sign-tasks/\\d+/records$")) return "upload";
         return null;
     }
