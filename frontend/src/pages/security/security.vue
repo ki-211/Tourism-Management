@@ -2,8 +2,9 @@
   <view class="page security-page">
     <view class="page-head"><text class="eyebrow">账号安全</text><view class="page-title">账号与安全</view><text class="muted">密码修改后会立即退出所有已登录设备。</text></view>
     <view class="card form-card">
-      <view class="section-title">修改密码</view>
-      <view class="field"><text class="field-label">当前密码</text><input v-model="password.current" class="input" password maxlength="64" placeholder="请输入当前密码" /></view>
+      <view class="section-title">{{ hasPassword ? '修改密码' : '设置密码' }}</view>
+      <text v-if="!hasPassword" class="muted form-intro">当前为微信登录账号，设置密码后也可用用户名 {{ session.user?.username }} 在 H5 登录。</text>
+      <view v-if="hasPassword" class="field"><text class="field-label">当前密码</text><input v-model="password.current" class="input" password maxlength="64" placeholder="请输入当前密码" /></view>
       <view class="field"><text class="field-label">新密码</text><input v-model="password.next" class="input" password maxlength="64" placeholder="8-64 位，不能与当前密码相同" /></view>
       <view class="field"><text class="field-label">确认新密码</text><input v-model="password.confirm" class="input" password maxlength="64" placeholder="再次输入新密码" /></view>
       <button class="primary-btn" :loading="saving" :disabled="saving" @click="changePassword">保存新密码</button>
@@ -12,14 +13,14 @@
       <view class="section-title">设备与账号</view>
       <button class="secondary-btn" :loading="processing" :disabled="processing" @click="logoutAll">退出所有设备</button>
       <text class="danger-copy">注销账号前，必须先转让你负责的所有活动。注销后用户名和昵称会匿名化，且无法恢复。</text>
-      <view class="field"><text class="field-label">输入密码确认注销</text><input v-model="deletePassword" class="input" password maxlength="64" placeholder="请输入当前密码" /></view>
+      <view v-if="hasPassword" class="field"><text class="field-label">输入密码确认注销</text><input v-model="deletePassword" class="input" password maxlength="64" placeholder="请输入当前密码" /></view>
       <button class="danger-button" :loading="deleting" :disabled="deleting" @click="deleteAccount">永久注销账号</button>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { api } from '@/services/api'
 import { useSessionStore } from '@/stores/session'
 import { useLocationSharingStore } from '@/stores/locationSharing'
@@ -28,6 +29,8 @@ const session = useSessionStore()
 const sharing = useLocationSharingStore()
 const password = reactive({ current: '', next: '', confirm: '' })
 const deletePassword = ref('')
+// 旧会话没有该字段，按已设置密码处理
+const hasPassword = computed(() => session.user?.passwordSet !== false)
 const saving = ref(false)
 const processing = ref(false)
 const deleting = ref(false)
@@ -39,10 +42,10 @@ async function leaveSession(message: string) {
   setTimeout(() => uni.reLaunch({ url: '/pages/login/login' }), 500)
 }
 async function changePassword() {
-  if (password.current.length < 8 || password.next.length < 8 || password.next !== password.confirm)
+  if ((hasPassword.value && password.current.length < 8) || password.next.length < 8 || password.next !== password.confirm)
     return uni.showToast({ title: '请检查当前密码和新密码', icon: 'none' })
   saving.value = true
-  try { await api('/users/me/password', 'PUT', { currentPassword: password.current, newPassword: password.next }); await leaveSession('密码已修改，请重新登录') }
+  try { await api('/users/me/password', 'PUT', { currentPassword: hasPassword.value ? password.current : undefined, newPassword: password.next }); await leaveSession('密码已保存，请重新登录') }
   finally { saving.value = false }
 }
 function logoutAll() {
@@ -54,11 +57,11 @@ function logoutAll() {
   } })
 }
 function deleteAccount() {
-  if (deletePassword.value.length < 8) return uni.showToast({ title: '请输入当前密码', icon: 'none' })
+  if (hasPassword.value && deletePassword.value.length < 8) return uni.showToast({ title: '请输入当前密码', icon: 'none' })
   uni.showModal({ title: '确认永久注销', content: '账号注销后无法恢复，确定继续吗？', confirmColor: '#dc4c4c', success: async result => {
     if (!result.confirm) return
     deleting.value = true
-    try { await api('/users/me', 'DELETE', { password: deletePassword.value }); await leaveSession('账号已注销') }
+    try { await api('/users/me', 'DELETE', hasPassword.value ? { password: deletePassword.value } : {}); await leaveSession('账号已注销') }
     finally { deleting.value = false }
   } })
 }

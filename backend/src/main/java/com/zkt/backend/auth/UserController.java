@@ -39,13 +39,13 @@ public class UserController {
     }
 
     @DeleteMapping
-    ApiResponse<Void> deleteAccount(@AuthenticationPrincipal UserPrincipal p, @Valid @RequestBody DeleteAccount r) {
-        auth.deleteAccount(p.id(), r.password());
+    ApiResponse<Void> deleteAccount(@AuthenticationPrincipal UserPrincipal p, @RequestBody(required = false) DeleteAccount r) {
+        auth.deleteAccount(p.id(), r == null ? null : r.password());
         return ApiResponse.ok("账号已注销", null);
     }
 
     private User find(Long id) { return users.findById(id).orElseThrow(() -> DomainException.notFound("用户不存在")); }
     public record UpdateProfile(@NotBlank @Size(max = 30) String nickname) {}
-    public record ChangePassword(@NotBlank String currentPassword, @NotBlank @Size(min = 8, max = 64) String newPassword) {}
-    public record DeleteAccount(@NotBlank String password) {}
+    public record ChangePassword(String currentPassword, @NotBlank @Size(min = 8, max = 64) String newPassword) {}
+    public record DeleteAccount(String password) {}
 }

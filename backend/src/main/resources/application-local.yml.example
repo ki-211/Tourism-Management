@@ -21,3 +21,9 @@ spring:
 logging:
   level:
     com.zkt.backend: INFO
+# 微信小程序登录（可选）：填小程序的 AppID 与 AppSecret（mp.weixin.qq.com → 开发管理 → 开发设置）
+# 也可以不写，改用环境变量 WECHAT_APP_ID / WECHAT_APP_SECRET 提供
+#app:
+#  wechat:
+#    app-id: wx0123456789abcdef
+#    app-secret: 你的AppSecret

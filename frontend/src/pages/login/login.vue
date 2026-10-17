@@ -13,6 +13,9 @@
       <view class="field"><text class="field-label">密码</text><input v-model="form.password" class="input" password placeholder="请输入 8-64 位密码" /></view>
       <button class="primary-btn" :loading="loading" @click="login">登录</button>
       <button class="secondary-btn" @click="goRegister">创建新账号</button>
+      <!-- #ifdef MP-WEIXIN -->
+      <button class="wechat-btn" :loading="wechatLoading" :disabled="wechatLoading" @click="wechatLogin">微信一键登录</button>
+      <!-- #endif -->
     </view>
     <text class="auth-note">一起计划 · 随时沟通 · 安心签到</text>
   </view>
@@ -28,6 +31,7 @@ import { useSessionStore } from '@/stores/session'
 const session = useSessionStore()
 const form = reactive({ username: '', password: '' })
 const loading = ref(false)
+const wechatLoading = ref(false)
 onShow(() => { if (hasSession()) uni.switchTab({ url: '/pages/home/home' }) })
 const goRegister = () => uni.navigateTo({ url: '/pages/register/register' })
 async function login() {
@@ -39,6 +43,15 @@ async function login() {
     uni.switchTab({ url: '/pages/home/home' })
   } finally { loading.value = false }
 }
+async function wechatLogin() {
+  wechatLoading.value = true
+  try {
+    const { code } = await uni.login({ provider: 'weixin' })
+    const data = await api<any>('/auth/wechat', 'POST', { code })
+    session.save(data)
+    uni.switchTab({ url: '/pages/home/home' })
+  } finally { wechatLoading.value = false }
+}
 </script>
 
 <style scoped lang="scss">
@@ -49,5 +62,6 @@ async function login() {
 .slogan { display: block; margin-top: 14rpx; color: $text-muted; font-size: 25rpx; line-height: 1.6; }
 .auth-card { padding: 38rpx 32rpx 34rpx; }
 .auth-card .section-title { margin-bottom: 6rpx; }
+.wechat-btn { width: 100%; height: 88rpx; margin-top: 20rpx; color: #fff; font-size: 28rpx; line-height: 88rpx; background: #07c160; border-radius: 18rpx; }
 .auth-note { display: block; margin-top: 8rpx; color: #91a09d; font-size: 22rpx; line-height: 1.5; text-align: center; letter-spacing: 2rpx; }
 </style>

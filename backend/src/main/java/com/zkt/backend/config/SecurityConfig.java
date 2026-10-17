@@ -32,7 +32,7 @@ public class SecurityConfig {
         return http.csrf(c -> c.disable()).cors(c -> {})
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(a -> a
-                        .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/refresh",
+                        .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/wechat", "/api/v1/auth/refresh",
                                 "/api/v1/media/public/**", "/api/v1/media/access/**", "/actuator/health", "/actuator/health/**", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**",
                                 "/h2-console/**", "/ws/**").permitAll()
                         .anyRequest().authenticated())

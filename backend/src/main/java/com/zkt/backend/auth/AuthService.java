@@ -37,19 +37,21 @@ public class AuthService {
     private final TransactionTemplate transactions;
     private final LoginAttemptService loginAttempts;
     private final VehiclePassengerRepository passengers;
+    private final WechatClient wechat;
     private final SecureRandom random = new SecureRandom();
 
     public AuthService(UserRepository users, RefreshTokenRepository refreshTokens, PasswordEncoder encoder,
                        JwtService jwt, AppSecurityProperties properties, Clock clock, ActivityRepository activities,
                        SignupRepository signups, SharedLocationRepository locations, RoomEventPublisher events,
                        AuthenticatedUserCache userCache, TransactionTemplate transactions,
-                       LoginAttemptService loginAttempts, VehiclePassengerRepository passengers) {
+                       LoginAttemptService loginAttempts, VehiclePassengerRepository passengers, WechatClient wechat) {
         this.users = users; this.refreshTokens = refreshTokens; this.encoder = encoder; this.jwt = jwt; this.properties = properties;
         this.clock = clock;
         this.activities = activities; this.signups = signups; this.locations = locations; this.events = events; this.userCache = userCache;
         this.transactions = transactions;
         this.loginAttempts = loginAttempts;
         this.passengers = passengers;
+        this.wechat = wechat;
     }
 
     @Transactional
@@ -69,6 +71,20 @@ public class AuthService {
             throw new DomainException(HttpStatus.UNAUTHORIZED, "BAD_CREDENTIALS", "用户名或密码错误");
         }
         loginAttempts.reset(username);
+        return issue(user);
+    }
+
+    /** 小程序登录：openid 已绑定则直接登录，否则自动创建一个未设置密码的账号。 */
+    @Transactional
+    public Tokens wechatLogin(String code) {
+        String openid = wechat.openid(code);
+        User user = users.findByWechatOpenid(openid).orElseGet(() -> {
+            User created = new User();
+            created.setUsername(generatedUsername()); created.setNickname("微信用户"); created.setRole("USER");
+            created.setPasswordHash(encoder.encode(randomToken())); created.setPasswordSet(false);
+            created.setWechatOpenid(openid);
+            return users.save(created);
+        });
         return issue(user);
     }
 
@@ -93,11 +109,13 @@ public class AuthService {
     @Transactional
     public void changePassword(Long userId, String currentPassword, String newPassword) {
         User user = activeUser(userId);
-        if (!encoder.matches(currentPassword, user.getPasswordHash()))
+        // 微信自动创建的账号首次设置密码时没有“当前密码”
+        if (user.isPasswordSet() && (currentPassword == null || !encoder.matches(currentPassword, user.getPasswordHash())))
             throw new DomainException(HttpStatus.UNAUTHORIZED, "BAD_CREDENTIALS", "当前密码错误");
-        if (encoder.matches(newPassword, user.getPasswordHash()))
+        if (user.isPasswordSet() && encoder.matches(newPassword, user.getPasswordHash()))
             throw DomainException.badRequest("PASSWORD_UNCHANGED", "新密码不能与当前密码相同");
         user.setPasswordHash(encoder.encode(newPassword));
+        user.setPasswordSet(true);
         revokeSessions(user);
     }
 
@@ -107,7 +125,7 @@ public class AuthService {
     @Transactional
     public void deleteAccount(Long userId, String password) {
         User user = activeUser(userId);
-        if (!encoder.matches(password, user.getPasswordHash()))
+        if (user.isPasswordSet() && (password == null || !encoder.matches(password, user.getPasswordHash())))
             throw new DomainException(HttpStatus.UNAUTHORIZED, "BAD_CREDENTIALS", "密码错误");
         if (activities.existsByCreatorIdAndStatus(userId, com.zkt.backend.activity.ActivityStatus.ACTIVE))
             throw DomainException.conflict("CREATOR_MUST_TRANSFER", "请先转让或取消名下所有进行中的活动，再注销账号");
@@ -119,6 +137,7 @@ public class AuthService {
         user.setNickname("已注销用户");
         user.setPasswordHash(encoder.encode(randomToken()));
         user.setRole("DELETED");
+        user.setWechatOpenid(null);
         user.setDeletedAt(now());
         user.setTokenVersion(user.getTokenVersion() + 1);
         userCache.invalidate(userId);
@@ -145,6 +164,15 @@ public class AuthService {
         return new Tokens(jwt.createAccessToken(user), raw, jwt.accessExpiresInSeconds(), UserView.from(user));
     }
 
+    private String generatedUsername() {
+        String username;
+        do {
+            byte[] bytes = new byte[8]; random.nextBytes(bytes);
+            username = "wx_" + HexFormat.of().formatHex(bytes).substring(0, 13);
+        } while (users.existsByUsername(username));
+        return username;
+    }
+
     private String hash(String raw) {
         try { return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(raw.getBytes(StandardCharsets.UTF_8))); }
         catch (Exception e) { throw new IllegalStateException(e); }
@@ -162,7 +190,9 @@ public class AuthService {
     private LocalDateTime now() { return LocalDateTime.now(clock); }
 
     public record Tokens(String accessToken, String refreshToken, long expiresIn, UserView user) {}
-    public record UserView(Long id, String username, String nickname, String role) {
-        public static UserView from(User u) { return new UserView(u.getId(), u.getUsername(), u.getNickname(), u.getRole()); }
+    public record UserView(Long id, String username, String nickname, String role, boolean passwordSet, boolean wechatBound) {
+        public static UserView from(User u) {
+            return new UserView(u.getId(), u.getUsername(), u.getNickname(), u.getRole(), u.isPasswordSet(), u.getWechatOpenid() != null);
+        }
     }
 }

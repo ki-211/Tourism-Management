@@ -19,6 +19,10 @@ public class User {
     private String nickname;
     @Column(nullable = false, length = 20)
     private String role = "USER";
+    @Column(name = "wechat_openid", unique = true, length = 64)
+    private String wechatOpenid;
+    @Column(name = "password_set", nullable = false)
+    private boolean passwordSet = true;
     @Column(name = "token_version", nullable = false)
     private Long tokenVersion = 0L;
     @Column(name = "deleted_at")
