@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>3D 智能车控</title>
+  <link rel="stylesheet" href="./style.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three.module.min.js",
+        "three/addons/": "./vendor/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="scene" aria-label="3D 车模，可拖动旋转、点击车窗等部件控制"></canvas>
+
+  <!-- 顶部状态栏：模仿中控大屏 -->
+  <header class="topbar">
+    <div class="brand">AURORA <b>S7</b></div>
+    <div class="status">
+      <span>🔋 82% · 536km</span>
+      <span>🌡 23°C</span>
+      <span id="lock-chip" class="chip">🔓 已解锁</span>
+      <span id="clock" class="clock">--:--</span>
+    </div>
+  </header>
+
+  <button id="panel-toggle" class="panel-toggle" aria-label="展开控制面板">☰ 车控</button>
+
+  <!-- 左侧车控面板 -->
+  <aside class="panel">
+    <section>
+      <h3>车窗</h3>
+      <div id="windows" class="win-grid"></div>
+      <div class="btn-row">
+        <button id="win-all-open">全部打开</button>
+        <button id="win-vent">透气</button>
+        <button id="win-all-close">全部关闭</button>
+      </div>
+    </section>
+    <section>
+      <h3>快捷控制</h3>
+      <div class="tiles">
+        <button class="tile" data-tile="lights"><i>💡</i>大灯<small></small></button>
+        <button class="tile" data-tile="trunk"><i>🧳</i>后备箱<small></small></button>
+        <button class="tile" data-tile="port"><i>⚡</i>充电口<small></small></button>
+        <button class="tile" data-tile="mirrors"><i>🪞</i>后视镜<small></small></button>
+        <button class="tile" data-tile="lock"><i>🔒</i>车锁<small></small></button>
+        <button class="tile" data-tile="ambient"><i>✨</i>氛围灯<small></small></button>
+      </div>
+    </section>
+    <section>
+      <h3>氛围灯颜色</h3>
+      <div id="ambients" class="swatches"></div>
+      <h3>车漆</h3>
+      <div id="paints" class="swatches"></div>
+    </section>
+  </aside>
+
+  <!-- 视角 -->
+  <nav class="views">
+    <button data-view="default">默认</button>
+    <button data-view="front">车头</button>
+    <button data-view="rear">车尾</button>
+    <button data-view="left">左侧</button>
+    <button data-view="right">右侧</button>
+    <button data-view="top">俯视</button>
+    <button id="auto-rotate">自动旋转</button>
+  </nav>
+
+  <!-- 语音助手 -->
+  <div class="voice-dock">
+    <div id="dialog" class="dialog" aria-live="polite"></div>
+    <div class="chips">
+      <button data-say="打开主驾车窗">打开主驾车窗</button>
+      <button data-say="后排车窗开一半">后排车窗开一半</button>
+      <button data-say="关闭所有车窗">关闭所有车窗</button>
+      <button data-say="打开大灯然后打开后备箱">开大灯+后备箱</button>
+      <button data-say="车里有点闷">车里有点闷</button>
+      <button data-say="氛围灯换成紫色">氛围灯紫色</button>
+      <button data-say="锁车">锁车</button>
+    </div>
+    <div class="inputbar">
+      <button id="mic" class="mic" aria-label="语音输入（空格键）">
+        <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="currentColor" d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-2.08A7 7 0 0 0 19 12h-2Z"/></svg>
+      </button>
+      <span id="voice-state" class="voice-state">点击说话</span>
+      <form id="cmd-form" class="cmd-form">
+        <input id="cmd" autocomplete="off" placeholder="也可以输入指令，如：副驾车窗开到百分之三十">
+        <button type="submit">发送</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="hint">拖拽旋转 · 滚轮/双指缩放 · 直接点击车窗、车灯、后备箱、充电口、后视镜</div>
+  <div id="tooltip" class="tooltip" hidden></div>
+  <div id="toast" class="toast"></div>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
